@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FACULTY
+  STUDENT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile        Profile?
+  feeLedger      FeeLedger[]
+  attendanceLogs AttendanceLog[]
+  serviceRequests ServiceRequest[]
+  leaveApplications LeaveApplication[]
+}
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+  
+  // JSON field for role-specific data (flexible storage)
+  metadata Json?
+}
+
+model FeeLedger {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     User     @relation(fields: [studentId], references: [id])
+  amount      Float
+  type        String   // "DUE" or "PAYMENT"
+  description String?
+  dueDate     DateTime?
+  paidDate    DateTime?
+  status      String   // "PENDING", "PAID"
+  receiptUrl  String?
+  createdAt   DateTime @default(now())
+}
+
+model AttendanceLog {
+  id        String   @id @default(cuid())
+  studentId String
+  student   User     @relation(fields: [studentId], references: [id])
+  date      DateTime
+  period    Int      // 1-8
+  status    String   // "PRESENT", "ABSENT"
+  
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, date, period])
+}
+
+enum RequestType {
+  NOC
+  LOAN
+  BONAFIDE
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  GENERATED
+}
+
+model ServiceRequest {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  type      RequestType
+  reason    String
+  status    RequestStatus @default(PENDING)
+  documentUrl String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Exam {
+  id        String   @id @default(cuid())
+  title     String
+  class     String
+  startDate DateTime
+  endDate   DateTime
+  status    String   // UPCOMING, COMPLETED
+  students  Int
+  createdAt DateTime @default(now())
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  title     String
+  subject   String
+  type      String   // PDF, VIDEO
+  url       String
+  size      String?
+  createdAt DateTime @default(now())
+}
+
+model LeaveApplication {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String   // SICK, CASUAL
+  days      Int
+  startDate DateTime
+  endDate   DateTime
+  reason    String
+  status    String   // PENDING, APPROVED, REJECTED
+  createdAt DateTime @default(now())
+}
+
+model StaffProfile {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  department  String
+  contact     String
+  status      String   // ACTIVE, ON_LEAVE
+  createdAt   DateTime @default(now())
+}

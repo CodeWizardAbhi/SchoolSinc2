@@ -1,100 +1,80 @@
-import Image from "next/image";
+import Link from "next/link";
+import { CloudSun, Users, GraduationCap, ShieldCheck } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-slate-100 dark:bg-slate-900 p-4">
+      <div className="w-full max-w-5xl space-y-12">
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl font-bold tracking-tight text-slate-900 dark:text-white">SchoolSync</h1>
+          <p className="text-xl text-slate-500 dark:text-slate-400">Select your role to continue</p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Admin Card */}
+          <Link href="/auth/login/admin" className="group">
+            <Card className="h-full hover:shadow-xl transition-all duration-300 hover:border-blue-500 cursor-pointer group-hover:-translate-y-1">
+              <CardHeader className="text-center pt-10">
+                <div className="mx-auto bg-blue-100 dark:bg-blue-900/30 p-4 rounded-full w-fit mb-4 group-hover:bg-blue-600 transition-colors">
+                  <ShieldCheck className="h-10 w-10 text-blue-600 group-hover:text-white transition-colors" />
+                </div>
+                <CardTitle className="text-2xl">Admin</CardTitle>
+                <CardDescription>Management & Control</CardDescription>
+              </CardHeader>
+              <CardContent className="text-center pb-10">
+                <span className="text-sm text-slate-400">Access Dashboard</span>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Teacher Card */}
+          <Link href="/auth/login/faculty" className="group">
+            <Card className="h-full hover:shadow-xl transition-all duration-300 hover:border-emerald-500 cursor-pointer group-hover:-translate-y-1">
+              <CardHeader className="text-center pt-10">
+                <div className="mx-auto bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-full w-fit mb-4 group-hover:bg-emerald-600 transition-colors">
+                  <Users className="h-10 w-10 text-emerald-600 group-hover:text-white transition-colors" />
+                </div>
+                <CardTitle className="text-2xl">Teacher</CardTitle>
+                <CardDescription>Faculty & Staff Portal</CardDescription>
+              </CardHeader>
+              <CardContent className="text-center pb-10">
+                <span className="text-sm text-slate-400">Mark Attendance & Grades</span>
+              </CardContent>
+            </Card>
+          </Link>
+
+          {/* Student Card */}
+          <Link href="/auth/login/student" className="group">
+            <Card className="h-full hover:shadow-xl transition-all duration-300 hover:border-indigo-500 cursor-pointer group-hover:-translate-y-1">
+              <CardHeader className="text-center pt-10">
+                <div className="mx-auto bg-indigo-100 dark:bg-indigo-900/30 p-4 rounded-full w-fit mb-4 group-hover:bg-indigo-600 transition-colors">
+                  <GraduationCap className="h-10 w-10 text-indigo-600 group-hover:text-white transition-colors" />
+                </div>
+                <CardTitle className="text-2xl">Student</CardTitle>
+                <CardDescription>Learning & History</CardDescription>
+              </CardHeader>
+              <CardContent className="text-center pb-10">
+                <span className="text-sm text-slate-400">View Results & Fees</span>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
+
+        <div className="text-center">
+          <p className="text-xs text-slate-400">Secure Enterprise Access System v1.0</p>
+        </div>
+      </div>
+
+      <footer className="fixed bottom-4 left-0 right-0 flex justify-center">
+        <div className="flex items-center gap-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg border border-slate-200 dark:border-slate-700">
+          <CloudSun className="h-6 w-6 text-yellow-500" />
+          <div className="text-sm">
+            <span className="font-semibold text-slate-900 dark:text-white">24°C</span>
+            <span className="mx-2 text-slate-300">|</span>
+            <span className="text-slate-600 dark:text-slate-400">New Delhi, IN</span>
+          </div>
+        </div>
       </footer>
     </div>
   );

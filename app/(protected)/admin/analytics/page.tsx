@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Download, Calendar } from "lucide-react";
@@ -18,6 +19,13 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 
 export default function AdminAnalyticsPage() {
+    // Prevent hydration mismatch with Recharts
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const attendanceData = [
         { name: 'Mon', Student: 95, Staff: 98 },
         { name: 'Tue', Student: 93, Staff: 97 },
@@ -34,6 +42,24 @@ export default function AdminAnalyticsPage() {
         { subject: 'Hist', Avg: 85 },
         { subject: 'Geo', Avg: 80 },
     ];
+
+    // Show loading skeleton until mounted
+    if (!isMounted) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-72" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-72" />
+                </div>
+                <div className="grid grid-cols-3 gap-6">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-24" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-24" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-24" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

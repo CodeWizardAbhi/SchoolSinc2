@@ -1,14 +1,16 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
     BookOpen,
     Calendar,
     Megaphone,
     CheckCircle2,
-    Upload,
     FilePlus,
     CalendarDays,
     Clock,
@@ -19,8 +21,16 @@ import {
     Target,
     Award,
     UserCheck,
-    AlertTriangle,
     BarChart3,
+    Play,
+    Pause,
+    Bell,
+    BookOpenCheck,
+    Check,
+    X,
+    AlertCircle,
+    Zap,
+    Radio,
 } from "lucide-react";
 import Link from "next/link";
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -34,8 +44,6 @@ const classAttendance = [
     { name: 'Present', value: 92, color: '#22c55e' },
     { name: 'Absent', value: 8, color: '#e5e7eb' },
 ];
-
-// Weekly classes data available for future use
 
 const studentPerformance = [
     { month: 'Aug', avgScore: 68 },
@@ -68,10 +76,17 @@ const pendingTasks = [
     { title: 'Review vacation homework', due: 'Due in 5 days', priority: 'low', type: 'grading' },
 ];
 
-const atRiskStudents = [
-    { name: 'Rahul Kumar', class: '10-A', issue: 'Low attendance (65%)', severity: 'high' },
-    { name: 'Priya Singh', class: '9-B', issue: 'Declining grades', severity: 'medium' },
-    { name: 'Amit Patel', class: '10-B', issue: 'Missing assignments (3)', severity: 'low' },
+// Fix 2: Quick Pulse data - students missing homework/assignments
+const quickPulseItems = [
+    { count: 3, issue: 'Missed Homework', students: ['Rahul Kumar', 'Amit Patel', 'Vikram Singh'], class: '10-A' },
+    { count: 2, issue: 'Missing Quiz Submission', students: ['Priya Singh', 'Neha Sharma'], class: '9-B' },
+];
+
+// Fix 3: Pending Approvals data
+const pendingApprovals = [
+    { id: 1, name: 'Rahul Kumar', class: '10-A', type: 'Sick Leave', date: 'Dec 18-20', reason: 'Fever and cold', status: 'pending' },
+    { id: 2, name: 'Priya Singh', class: '9-B', type: 'Personal Leave', date: 'Dec 22', reason: 'Family event', status: 'pending' },
+    { id: 3, name: 'Amit Patel', class: '10-B', type: 'Late Submission', date: 'Math Assignment', reason: 'Medical appointment', status: 'pending' },
 ];
 
 const notices = [
@@ -87,17 +102,102 @@ const upcomingEvents = [
 ];
 
 export default function FacultyDashboardClient({ userName }: FacultyDashboardClientProps) {
-    const currentDate = new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    const [isMounted, setIsMounted] = useState(false);
 
-    const currentTime = new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    // Fix 1: Live Class State
+    const [isClassActive, setIsClassActive] = useState(false);
+    const [classTimer, setClassTimer] = useState(0); // in seconds
+    const [activeClass, setActiveClass] = useState(todaySchedule.find(s => s.status === 'ongoing'));
+
+    // Fix 3: Approvals state
+    const [approvals, setApprovals] = useState(pendingApprovals);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Fix 1: Timer effect for active class
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isClassActive) {
+            interval = setInterval(() => {
+                setClassTimer(prev => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [isClassActive]);
+
+    const formatTimer = useCallback((seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }, []);
+
+    // Fix 1: Toggle class session
+    const toggleClassSession = () => {
+        if (isClassActive) {
+            setIsClassActive(false);
+            setClassTimer(0);
+        } else {
+            setIsClassActive(true);
+            setClassTimer(0);
+        }
+    };
+
+    // Fix 2: Nudge students handler
+    const handleNudgeAll = (item: typeof quickPulseItems[0]) => {
+        alert(`Notification sent to ${item.students.join(', ')}: "${userName} is waiting for your ${item.issue.toLowerCase()}. Submit now for partial XP."`);
+    };
+
+    // Fix 3: Handle approval actions
+    const handleApproval = (id: number, action: 'approve' | 'reject') => {
+        setApprovals(prev => prev.filter(a => a.id !== id));
+        const approval = approvals.find(a => a.id === id);
+        if (approval) {
+            alert(`${action === 'approve' ? 'Approved' : 'Rejected'} ${approval.type} request from ${approval.name}`);
+        }
+    };
+
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'Good Morning';
+        if (hour >= 12 && hour < 17) return 'Good Afternoon';
+        if (hour >= 17 && hour < 21) return 'Good Evening';
+        return 'Good Night';
+    };
+
+    const currentDate = isMounted
+        ? new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+        : '';
+
+    const currentTime = isMounted
+        ? new Date().toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+        : '';
+
+    if (!isMounted) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-2xl h-48" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -106,7 +206,7 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                 <div className="relative z-10">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div>
-                            <p className="text-slate-400 text-sm mb-1">Good Morning,</p>
+                            <p className="text-slate-400 text-sm mb-1">{getGreeting()},</p>
                             <h2 className="text-2xl lg:text-3xl font-bold mb-2">{userName}</h2>
                             <p className="text-slate-300 text-sm">Have a productive day at work</p>
                         </div>
@@ -116,7 +216,7 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                                 <p className="text-xs text-slate-300">Classes Today</p>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center min-w-[90px]">
-                                <p className="text-2xl font-bold text-amber-400">4</p>
+                                <p className="text-2xl font-bold text-amber-400">{pendingTasks.length}</p>
                                 <p className="text-xs text-slate-300">Pending Tasks</p>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center min-w-[90px]">
@@ -124,8 +224,8 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                                 <p className="text-xs text-slate-300">Total Students</p>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center min-w-[90px]">
-                                <p className="text-2xl font-bold text-rose-400">3</p>
-                                <p className="text-xs text-slate-300">At-Risk</p>
+                                <p className="text-2xl font-bold text-purple-400">{approvals.length}</p>
+                                <p className="text-xs text-slate-300">Approvals</p>
                             </div>
                         </div>
                     </div>
@@ -144,7 +244,6 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                         </span>
                     </div>
                 </div>
-                {/* Background decoration */}
                 <div className="absolute top-0 right-0 w-96 h-full pointer-events-none opacity-5">
                     <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
                         <path fill="#FFFFFF" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,79.6,-46.9C87.4,-34.7,90.1,-20.4,90.9,-6.1C91.7,8.2,90.6,22.5,84.1,35.2C77.6,47.9,65.7,59,52.2,65.9C38.7,72.8,23.6,75.5,9.2,74C-5.2,72.5,-19,66.8,-31.6,59.3C-44.2,51.8,-55.6,42.5,-64.5,30.8C-73.4,19.1,-79.8,5,-78.3,-8.3C-76.8,-21.6,-67.4,-34.1,-56.3,-43.3C-45.2,-52.5,-32.4,-58.4,-19.4,-64.4C-6.4,-70.4,6.8,-76.5,20.8,-76.5C34.8,-76.5,52,-70.4,44.7,-76.4Z" transform="translate(100 100)" />
@@ -152,7 +251,67 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                 </div>
             </div>
 
-            {/* Quick Actions Row */}
+            {/* Fix 1: Live Class Widget - Prominent Top Widget */}
+            {activeClass && (
+                <Card className={`border-2 transition-all ${isClassActive ? 'border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50 shadow-lg shadow-blue-500/20' : 'border-slate-200'}`}>
+                    <CardContent className="py-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className={`h-14 w-14 rounded-xl flex items-center justify-center transition-all ${isClassActive ? 'bg-blue-500 animate-pulse' : 'bg-slate-100'}`}>
+                                    {isClassActive ? (
+                                        <Radio className="h-7 w-7 text-white" />
+                                    ) : (
+                                        <BookOpen className="h-7 w-7 text-slate-500" />
+                                    )}
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-bold text-lg">{activeClass.class} - {activeClass.subject}</h3>
+                                        {isClassActive && (
+                                            <Badge className="bg-blue-500 text-white animate-pulse flex items-center gap-1">
+                                                <span className="h-2 w-2 bg-white rounded-full animate-ping" />
+                                                LIVE NOW
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">Room {activeClass.room} • {activeClass.time}</p>
+                                    {isClassActive && (
+                                        <p className="text-sm font-mono font-semibold text-blue-600 mt-1">
+                                            Class in Session: {formatTimer(classTimer)}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Button
+                                    onClick={toggleClassSession}
+                                    className={`gap-2 min-w-[140px] ${isClassActive
+                                        ? 'bg-rose-500 hover:bg-rose-600'
+                                        : 'bg-emerald-500 hover:bg-emerald-600'
+                                        }`}
+                                >
+                                    {isClassActive ? (
+                                        <>
+                                            <Pause className="h-4 w-4" /> End Class
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Play className="h-4 w-4" /> Start Class
+                                        </>
+                                    )}
+                                </Button>
+                                <Link href="/faculty/attendance">
+                                    <Button variant="outline" className="gap-2">
+                                        <CheckCircle2 className="h-4 w-4" /> Mark Attendance
+                                    </Button>
+                                </Link>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Quick Actions Row - Updated with Quiz Upload */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Link href="/faculty/attendance">
                     <div className="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all rounded-xl p-4 text-white flex items-center gap-4 cursor-pointer shadow-lg shadow-blue-500/25">
@@ -161,7 +320,7 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                         </div>
                         <div>
                             <h4 className="font-bold">Mark Attendance</h4>
-                            <p className="text-xs text-blue-100">Quick attendance marking</p>
+                            <p className="text-xs text-blue-100">Speed Grid for 40+ students</p>
                         </div>
                         <ChevronRight className="h-5 w-5 ml-auto opacity-60" />
                     </div>
@@ -169,11 +328,11 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                 <Link href="/faculty/academics">
                     <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 transition-all rounded-xl p-4 text-white flex items-center gap-4 cursor-pointer shadow-lg shadow-emerald-500/25">
                         <div className="bg-white/20 p-3 rounded-xl">
-                            <Upload className="h-6 w-6" />
+                            <BookOpenCheck className="h-6 w-6" />
                         </div>
                         <div>
-                            <h4 className="font-bold">Upload Marks</h4>
-                            <p className="text-xs text-emerald-100">Assignment & exam results</p>
+                            <h4 className="font-bold">Upload Quiz</h4>
+                            <p className="text-xs text-emerald-100">Create with XP rewards</p>
                         </div>
                         <ChevronRight className="h-5 w-5 ml-auto opacity-60" />
                     </div>
@@ -196,21 +355,21 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column - Schedule & Classes */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Today's Schedule */}
-                    <Card>
-                        <CardHeader className="pb-3">
+                    {/* Today's Schedule - MOST IMPORTANT (Teachers check 10x/day) */}
+                    <Card className="border-blue-200">
+                        <CardHeader className="pb-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
                             <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-purple-500" />
+                                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                    <Clock className="h-5 w-5 text-blue-500" />
                                     Today&apos;s Schedule
                                 </CardTitle>
                                 <Badge className="bg-blue-500">Wednesday</Badge>
                             </div>
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="pt-4">
                             <div className="space-y-2">
                                 {todaySchedule.map((item, i) => (
-                                    <div key={i} className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${item.status === 'ongoing' ? 'bg-blue-50 border border-blue-200' :
+                                    <div key={i} className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${item.status === 'ongoing' ? 'bg-blue-50 border-2 border-blue-300 shadow-sm' :
                                         item.status === 'completed' ? 'bg-slate-50 opacity-60' :
                                             'bg-white border border-slate-100 hover:bg-slate-50'
                                         }`}>
@@ -364,8 +523,46 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                     </div>
                 </div>
 
-                {/* Right Column - Tasks, At-Risk, Notices */}
+                {/* Right Column - Tasks, Quick Pulse, Notices */}
                 <div className="space-y-6">
+                    {/* Fix 2: Quick Pulse Widget - Replaces At-Risk Students */}
+                    <Card className="border-rose-200 bg-gradient-to-r from-rose-50 to-pink-50">
+                        <CardHeader className="pb-2">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-rose-700">
+                                    <Zap className="h-4 w-4 text-rose-500" />
+                                    Quick Pulse
+                                </CardTitle>
+                                <Badge className="bg-rose-500">Action Required</Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {quickPulseItems.map((item, i) => (
+                                <div key={i} className="bg-white border border-rose-100 rounded-lg p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl font-bold text-rose-600">{item.count}</span>
+                                            <div>
+                                                <p className="text-sm font-medium">Students {item.issue}</p>
+                                                <p className="text-[10px] text-muted-foreground">Class {item.class}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mb-2 truncate">
+                                        {item.students.join(', ')}
+                                    </p>
+                                    <Button
+                                        size="sm"
+                                        className="w-full bg-rose-500 hover:bg-rose-600 gap-1"
+                                        onClick={() => handleNudgeAll(item)}
+                                    >
+                                        <Bell className="h-3 w-3" /> Nudge All
+                                    </Button>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+
                     {/* Pending Tasks */}
                     <Card>
                         <CardHeader className="pb-2">
@@ -393,39 +590,54 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
                         </CardContent>
                     </Card>
 
-                    {/* At-Risk Students */}
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                    <AlertTriangle className="h-4 w-4 text-rose-500" />
-                                    At-Risk Students
-                                </CardTitle>
-                                <Link href="/faculty/students" className="text-xs text-blue-600 hover:underline">View All</Link>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {atRiskStudents.map((student, i) => (
-                                <div key={i} className={`p-3 rounded-lg border ${student.severity === 'high' ? 'border-rose-200 bg-rose-50' :
-                                    student.severity === 'medium' ? 'border-amber-200 bg-amber-50' :
-                                        'border-slate-200 bg-slate-50'
-                                    }`}>
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <p className="text-sm font-medium">{student.name}</p>
-                                            <p className="text-[10px] text-slate-500">Class {student.class}</p>
-                                        </div>
-                                        <Badge className={`text-[10px] ${student.severity === 'high' ? 'bg-rose-500' :
-                                            student.severity === 'medium' ? 'bg-amber-500' : 'bg-slate-500'
-                                            }`}>
-                                            {student.severity}
-                                        </Badge>
-                                    </div>
-                                    <p className="text-[10px] text-slate-600 mt-1">{student.issue}</p>
+                    {/* Pending Approvals - Secondary position (checked once/day) */}
+                    {approvals.length > 0 && (
+                        <Card className="border-amber-200">
+                            <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-lg">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                        <AlertCircle className="h-4 w-4 text-amber-500" />
+                                        Pending Approvals
+                                    </CardTitle>
+                                    <Badge className="bg-amber-500">{approvals.length}</Badge>
                                 </div>
-                            ))}
-                        </CardContent>
-                    </Card>
+                            </CardHeader>
+                            <CardContent className="space-y-2 pt-3">
+                                {approvals.map((approval) => (
+                                    <div key={approval.id} className="bg-white border border-amber-100 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+                                                <span className="text-amber-600 font-semibold text-xs">
+                                                    {approval.name.split(' ').map(n => n[0]).join('')}
+                                                </span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium truncate">{approval.name}</p>
+                                                <p className="text-[10px] text-muted-foreground">{approval.type}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                className="flex-1 h-7 text-xs bg-emerald-500 hover:bg-emerald-600 gap-1"
+                                                onClick={() => handleApproval(approval.id, 'approve')}
+                                            >
+                                                <Check className="h-3 w-3" /> Approve
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="flex-1 h-7 text-xs text-rose-600 border-rose-200 hover:bg-rose-50 gap-1"
+                                                onClick={() => handleApproval(approval.id, 'reject')}
+                                            >
+                                                <X className="h-3 w-3" /> Reject
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* Upcoming Events */}
                     <Card>

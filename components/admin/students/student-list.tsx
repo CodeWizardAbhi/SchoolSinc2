@@ -19,7 +19,9 @@ import {
     UserX,
     Download,
     MoreVertical,
+    Loader2,
 } from "lucide-react";
+import { createStudentUser, createParentUser } from "@/actions/admin-create-user";
 import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
@@ -64,6 +66,10 @@ export function StudentList() {
     const [students, setStudents] = useState<Student[]>(initialStudents);
     const [searchQuery, setSearchQuery] = useState("");
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [classFilter, setClassFilter] = useState("all");
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [newStudent, setNewStudent] = useState({
         name: "",
         email: "",
@@ -74,36 +80,86 @@ export function StudentList() {
         phone: "",
     });
 
-    const handleAddStudent = () => {
+    const handleAddStudent = async () => {
         if (!newStudent.name || !newStudent.email || !newStudent.class || !newStudent.section || !newStudent.gender) {
             return;
         }
 
-        const studentId = `AD${Date.now().toString().slice(-7)}`;
-        const newStudentEntry: Student = {
-            id: studentId,
-            name: newStudent.name,
-            email: newStudent.email,
-            class: newStudent.class,
-            section: newStudent.section,
-            gender: newStudent.gender,
-            parentName: newStudent.parentName || "Not Provided",
-            phone: newStudent.phone || "Not Provided",
-            joined: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
-            status: "Active",
-        };
+        setIsLoading(true);
+        setError(null);
+        setSuccess(null);
 
-        setStudents([newStudentEntry, ...students]);
-        setNewStudent({ name: "", email: "", class: "", section: "", gender: "", parentName: "", phone: "" });
-        setIsDialogOpen(false);
+        try {
+            // Create student user in database with default password
+            const studentResult = await createStudentUser(newStudent.email, newStudent.name);
+
+            if (studentResult.error) {
+                setError(studentResult.error);
+                setIsLoading(false);
+                return;
+            }
+
+            // Create parent user with email format: parent.{student_email}
+            console.log("Creating parent user for student:", newStudent.email);
+            const parentResult = await createParentUser(newStudent.email, newStudent.parentName || "Parent");
+            console.log("Parent creation result:", parentResult);
+
+            let parentCreated = true;
+            if (parentResult.error) {
+                // Log warning but don't block - student was created successfully
+                console.warn("Parent user creation warning:", parentResult.error);
+                parentCreated = false;
+            }
+
+            // If user created successfully, add to local state
+            const studentId = `AD${Date.now().toString().slice(-7)}`;
+            const newStudentEntry: Student = {
+                id: studentId,
+                name: newStudent.name,
+                email: newStudent.email,
+                class: newStudent.class,
+                section: newStudent.section,
+                gender: newStudent.gender,
+                parentName: newStudent.parentName || "Not Provided",
+                phone: newStudent.phone || "Not Provided",
+                joined: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }),
+                status: "Active",
+            };
+
+            setStudents([newStudentEntry, ...students]);
+            setNewStudent({ name: "", email: "", class: "", section: "", gender: "", parentName: "", phone: "" });
+
+            // Show success message with parent email info
+            const parentEmail = `parent.${newStudent.email}`;
+            if (parentCreated) {
+                setSuccess(`Student & Parent accounts created! Parent login: ${parentEmail} | Password: Abhi@99`);
+            } else {
+                setSuccess(`Student created! Parent account failed: ${parentResult.error}`);
+            }
+
+            // Close dialog after a short delay to show success message
+            setTimeout(() => {
+                setIsDialogOpen(false);
+                setSuccess(null);
+            }, 3000);
+        } catch (err) {
+            console.error("Error adding student:", err);
+            const errorMessage = err instanceof Error ? err.message : "Failed to create student. Please try again.";
+            setError(errorMessage);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const filteredStudents = students.filter(
-        (student) =>
-            student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.class.includes(searchQuery) ||
-            student.email.toLowerCase().includes(searchQuery.toLowerCase())
+        (student) => {
+            const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                student.class.includes(searchQuery) ||
+                student.email.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesClass = classFilter === "all" || student.class === classFilter;
+            return matchesSearch && matchesClass;
+        }
     );
 
     const activeCount = students.filter(s => s.status === "Active").length;
@@ -287,16 +343,35 @@ export function StudentList() {
                                         </div>
                                     </div>
                                 </div>
+                                {error && (
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+                                        {error}
+                                    </div>
+                                )}
+                                {success && (
+                                    <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-md text-sm">
+                                        {success}
+                                    </div>
+                                )}
                                 <DialogFooter className="gap-2 sm:gap-0">
-                                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                                    <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>
                                         Cancel
                                     </Button>
                                     <Button
                                         onClick={handleAddStudent}
                                         className="bg-blue-600 hover:bg-blue-700"
-                                        disabled={!newStudent.name || !newStudent.email || !newStudent.class || !newStudent.section || !newStudent.gender}
+                                        disabled={isLoading || !newStudent.name || !newStudent.email || !newStudent.class || !newStudent.section || !newStudent.gender}
                                     >
-                                        <Plus className="mr-2 h-4 w-4" /> Add Student
+                                        {isLoading ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Creating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Plus className="mr-2 h-4 w-4" /> Add Student
+                                            </>
+                                        )}
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -316,14 +391,14 @@ export function StudentList() {
                             />
                         </div>
                         <div className="flex gap-2">
-                            <Select defaultValue="all">
+                            <Select value={classFilter} onValueChange={setClassFilter}>
                                 <SelectTrigger className="w-[130px]">
                                     <SelectValue placeholder="Class" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Classes</SelectItem>
-                                    {[9, 10, 11, 12].map((c) => (
-                                        <SelectItem key={c} value={c.toString()}>Class {c}</SelectItem>
+                                    {["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"].map((c) => (
+                                        <SelectItem key={c} value={c}>Class {c}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

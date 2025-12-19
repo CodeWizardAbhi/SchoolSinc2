@@ -1,123 +1,147 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     BookOpen,
     Calendar,
     Clock,
     FileText,
     GraduationCap,
-    Upload,
     User,
-    ChevronDown,
     ChevronRight,
     TrendingUp,
     TrendingDown,
-    CheckCircle2,
-    BookMarked,
     Target,
     Award,
-    BarChart3,
     CalendarDays,
-    Megaphone,
+    Swords,
+    Play,
+    Trophy,
+    Scroll,
+    Shield,
+    ChevronLeft,
+    Brain,
+    Zap,
+    Crown,
+    Medal,
+    MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
-import { PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, AreaChart, Area } from 'recharts';
 
-// Mock Data
-const attendanceData = [
-    { name: 'Present', value: 73, color: '#22c55e' },
-    { name: 'Absent', value: 27, color: '#e5e7eb' },
-];
+// ============ GAMIFICATION DATA ============
 
-const weeklyAttendance = [
-    { day: 'Mon', present: true },
-    { day: 'Tue', present: true },
-    { day: 'Wed', present: false },
-    { day: 'Thu', present: true },
-    { day: 'Fri', present: true },
-];
-
-// Monthly performance data - weekly scores for each month
-const monthlyPerformanceData: Record<string, { week: string; score: number }[]> = {
-    'December': [
-        { week: 'Week 1', score: 78 },
-        { week: 'Week 2', score: 82 },
-        { week: 'Week 3', score: 79 },
-        { week: 'Week 4', score: 85 },
-    ],
-    'November': [
-        { week: 'Week 1', score: 72 },
-        { week: 'Week 2', score: 75 },
-        { week: 'Week 3', score: 78 },
-        { week: 'Week 4', score: 80 },
-    ],
-    'October': [
-        { week: 'Week 1', score: 68 },
-        { week: 'Week 2', score: 70 },
-        { week: 'Week 3', score: 74 },
-        { week: 'Week 4', score: 76 },
-    ],
-    'September': [
-        { week: 'Week 1', score: 65 },
-        { week: 'Week 2', score: 68 },
-        { week: 'Week 3', score: 70 },
-        { week: 'Week 4', score: 72 },
-    ],
-    'August': [
-        { week: 'Week 1', score: 62 },
-        { week: 'Week 2', score: 64 },
-        { week: 'Week 3', score: 66 },
-        { week: 'Week 4', score: 68 },
-    ],
-    'July': [
-        { week: 'Week 1', score: 58 },
-        { week: 'Week 2', score: 60 },
-        { week: 'Week 3', score: 62 },
-        { week: 'Week 4', score: 65 },
-    ],
+const rivalInfo = {
+    name: "Rahul K.",
+    rank: 4,
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul",
+    xpAhead: 20,
 };
 
-const availableMonths = ['December', 'November', 'October', 'September', 'August', 'July'];
+const continueLearning = [
+    {
+        id: 1,
+        title: "Algebra II - Quadratic Equations",
+        subject: "Mathematics",
+        thumbnail: "📐",
+        progress: 65,
+        duration: "12:34",
+        stoppedAt: "12:34",
+        teacher: "Mr. Sharma",
+        teacherAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sharma",
+    },
+    {
+        id: 2,
+        title: "Chemical Reactions - Balancing",
+        subject: "Chemistry",
+        thumbnail: "⚗️",
+        progress: 0,
+        duration: "18:20",
+        stoppedAt: null,
+        missedTopic: true,
+        teacher: "Mrs. Patel",
+        teacherAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Patel",
+    },
+    {
+        id: 3,
+        title: "Shakespearean Sonnets",
+        subject: "English",
+        thumbnail: "📖",
+        progress: 30,
+        duration: "8:45",
+        stoppedAt: "2:38",
+        teacher: "Ms. Wilson",
+        teacherAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Wilson",
+    },
+];
+
+const dailyChallenge = {
+    subject: "Trigonometry",
+    topic: "Sin & Cos Functions",
+    xpReward: 50,
+    questionsCount: 5,
+    timeLimit: "5 min",
+};
+
+const questsDueToday = [
+    { title: "Physics Assignment Ch-5", type: "side", reward: 40, endsIn: "6 hrs" },
+    { title: "Math Practice Set", type: "side", reward: 30, endsIn: "8 hrs" },
+];
+
+const questsUpcoming = [
+    { title: "Mathematics Exam", type: "main", reward: 100, badge: "Math Master", endsIn: "2 days" },
+    { title: "Science Project", type: "side", reward: 75, endsIn: "5 days" },
+    { title: "English Essay", type: "side", reward: 50, endsIn: "7 days" },
+];
+
+type LeaderboardEntry = {
+    rank: number;
+    name: string;
+    xp: number;
+    avatar: string;
+    isUser?: boolean;
+    showGapBefore?: boolean;
+};
+
+const allLeaderboard: LeaderboardEntry[] = [
+    { rank: 1, name: "Priya S.", xp: 3200, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya" },
+    { rank: 2, name: "Amit J.", xp: 3050, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Amit" },
+    { rank: 3, name: "Sara M.", xp: 2900, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sara" },
+    { rank: 4, name: "Rahul K.", xp: 2570, avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul" },
+    { rank: 5, name: "You", xp: 2550, avatar: "", isUser: true },
+];
+
+function getSmartLeaderboard(): LeaderboardEntry[] {
+    const top3 = allLeaderboard.filter(e => e.rank <= 3);
+    const userEntry = allLeaderboard.find(e => e.isUser);
+    const rivalEntry = allLeaderboard.find(e => e.rank === (userEntry?.rank || 0) - 1);
+    if (!userEntry) return top3;
+    if (userEntry.rank <= 4) return allLeaderboard.filter(e => e.rank <= 5);
+    const result: LeaderboardEntry[] = [...top3];
+    if (rivalEntry && rivalEntry.rank > 3) result.push({ ...rivalEntry, showGapBefore: true });
+    result.push(userEntry);
+    return result;
+}
 
 const subjectPerformance = [
-    { subject: 'Mathematics', score: 88, grade: 'A', trend: 'up', change: '+5%' },
-    { subject: 'Science', score: 82, grade: 'A-', trend: 'up', change: '+3%' },
-    { subject: 'English', score: 78, grade: 'B+', trend: 'down', change: '-2%' },
-    { subject: 'Social Studies', score: 85, grade: 'A', trend: 'up', change: '+7%' },
-    { subject: 'Nepali', score: 75, grade: 'B+', trend: 'same', change: '0%' },
+    { subject: "Mathematics", score: 88, grade: "A", trend: "up", change: "+5%" },
+    { subject: "Science", score: 82, grade: "A-", trend: "up", change: "+3%" },
+    { subject: "English", score: 78, grade: "B+", trend: "down", change: "-2%" },
+    { subject: "Social Studies", score: 85, grade: "A", trend: "up", change: "+7%" },
+    { subject: "Nepali", score: 68, grade: "C+", trend: "down", change: "-3%", isWeakest: true },
 ];
 
-const upcomingEvents = [
-    { title: 'Mathematics Exam', date: 'Dec 15', time: '10:00 AM', type: 'exam', urgent: true },
-    { title: 'Science Project Due', date: 'Dec 18', time: '5:00 PM', type: 'assignment', urgent: true },
-    { title: 'Parent-Teacher Meeting', date: 'Dec 20', time: '2:00 PM', type: 'meeting', urgent: false },
-    { title: 'Winter Break Starts', date: 'Dec 22', time: '-', type: 'holiday', urgent: false },
-];
-
-const todaySchedule = [
-    { time: '09:00', subject: 'Mathematics', room: '202', teacher: 'Mr. Sharma', status: 'completed' },
-    { time: '10:00', subject: 'Science', room: '204', teacher: 'Mrs. Patel', status: 'ongoing' },
-    { time: '11:00', subject: 'English', room: '202', teacher: 'Ms. Wilson', status: 'upcoming' },
-    { time: '12:00', subject: 'Break', room: '-', teacher: '-', status: 'upcoming' },
-    { time: '02:00', subject: 'Social Studies', room: '206', teacher: 'Mr. Kumar', status: 'upcoming' },
-];
-
-const pendingTasks = [
-    { title: 'Physics Assignment Ch-5', due: 'Tomorrow', priority: 'high' },
-    { title: 'English Essay', due: 'In 3 days', priority: 'medium' },
-    { title: 'Math Practice Set 12', due: 'In 5 days', priority: 'low' },
-];
-
-const notices = [
-    { title: 'Holiday Notice', desc: 'School closed on Dec 25', time: '2 hours ago', type: 'holiday' },
-    { title: 'Exam Schedule Released', desc: 'Check your exam timetable', time: '1 day ago', type: 'exam' },
-    { title: 'Fee Reminder', desc: 'Last date: Dec 20', time: '2 days ago', type: 'finance' },
+const quickActions = [
+    { label: "Exams", icon: Clock, color: "bg-purple-500", href: "/student/exams" },
+    { label: "Leave", icon: Calendar, color: "bg-rose-500", href: "/student/leaves" },
+    { label: "Resources", icon: BookOpen, color: "bg-blue-500", href: "/student/resources" },
+    { label: "Reports", icon: FileText, color: "bg-emerald-500", href: "/student/reports" },
+    { label: "Finance", icon: GraduationCap, color: "bg-amber-500", href: "/student/finance" },
+    { label: "Profile", icon: User, color: "bg-slate-600", href: "/student/profile" },
 ];
 
 interface StudentDashboardClientProps {
@@ -125,420 +149,604 @@ interface StudentDashboardClientProps {
 }
 
 export default function StudentDashboardClient({ userName }: StudentDashboardClientProps) {
-    // Get current month name for the performance chart
-    const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long' });
+    const [isMounted, setIsMounted] = useState(false);
+    const [carouselIndex, setCarouselIndex] = useState(0);
 
-    // State for selected month in performance chart
-    const [selectedMonth, setSelectedMonth] = useState(currentMonth);
+    useEffect(() => { setIsMounted(true); }, []);
 
-    // Get performance data for selected month (fallback to December if month not found)
-    const performanceData = monthlyPerformanceData[selectedMonth] || monthlyPerformanceData['December'];
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return "Good Morning";
+        if (hour >= 12 && hour < 17) return "Good Afternoon";
+        if (hour >= 17 && hour < 21) return "Good Evening";
+        return "Good Night";
+    };
 
-    const currentDate = new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    const currentDate = isMounted
+        ? new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+        : "";
+
+    const nextSlide = () => setCarouselIndex((prev) => (prev + 1) % continueLearning.length);
+    const prevSlide = () => setCarouselIndex((prev) => (prev - 1 + continueLearning.length) % continueLearning.length);
+    const smartLeaderboard = getSmartLeaderboard();
+    const currentItem = continueLearning[carouselIndex];
+
+    if (!isMounted) {
+        return (
+            <div className="space-y-4 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="lg:col-span-2 bg-slate-200 dark:bg-slate-800 rounded-xl h-64" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-64" />
+                </div>
+            </div>
+        );
+    }
+
+    // ============ SHARED COMPONENTS ============
+
+    // Rival Alert Card
+    const RivalAlertCard = () => (
+        <Card className="bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/30 border-rose-200 dark:border-rose-800">
+            <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                    <div className="relative flex-shrink-0">
+                        <Avatar className="h-11 w-11 border-2 border-rose-300">
+                            <AvatarImage src={rivalInfo.avatar} />
+                            <AvatarFallback>{rivalInfo.name.slice(0, 2)}</AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center border-2 border-white dark:border-slate-900">
+                            <span className="text-[10px] font-bold text-white">#{rivalInfo.rank}</span>
+                        </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-rose-700 dark:text-rose-300 truncate">
+                            {rivalInfo.xpAhead} XP behind {rivalInfo.name}
+                        </p>
+                        <p className="text-[10px] text-rose-600 dark:text-rose-400">Complete a quiz to overtake!</p>
+                    </div>
+                    <Button size="sm" className="h-8 text-xs bg-gradient-to-r from-rose-600 to-orange-600 hover:from-rose-700 hover:to-orange-700 font-semibold flex-shrink-0">
+                        <Swords className="h-3 w-3 mr-1" />
+                        Beat {rivalInfo.name.split(" ")[0]}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    // Daily XP Boost Card
+    const DailyXPCard = () => (
+        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 border-amber-200 dark:border-amber-800">
+            <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <Brain className="h-4 w-4 text-amber-600" />
+                        <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">Daily XP Boost</span>
+                    </div>
+                    <Badge className="bg-amber-500 text-white text-[10px]">+{dailyChallenge.xpReward} XP</Badge>
+                </div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">{dailyChallenge.subject} Quiz</h3>
+                <p className="text-[10px] text-slate-600 dark:text-slate-400 mb-3">{dailyChallenge.topic}</p>
+                <div className="flex items-center justify-between">
+                    <div className="flex gap-3 text-[10px] text-slate-500">
+                        <span>{dailyChallenge.questionsCount} Qs</span>
+                        <span>{dailyChallenge.timeLimit}</span>
+                    </div>
+                    <Button size="sm" className="h-7 text-xs bg-amber-600 hover:bg-amber-700">
+                        <Zap className="h-3 w-3 mr-1" />
+                        Start Quiz
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    // Leaderboard Card
+    const LeaderboardCard = () => (
+        <Card>
+            <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-amber-500" />
+                    Class Leaderboard
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 px-4 pb-4">
+                <div className="space-y-1">
+                    {smartLeaderboard.map((entry) => (
+                        <div key={entry.rank}>
+                            {entry.showGapBefore && (
+                                <div className="flex items-center justify-center py-1.5 text-slate-400">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </div>
+                            )}
+                            <div className={`flex items-center justify-between p-2 rounded-lg transition-all ${entry.isUser
+                                    ? "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border-2 border-blue-300 dark:border-blue-700"
+                                    : entry.rank === rivalInfo.rank
+                                        ? "bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800"
+                                        : "bg-slate-50 dark:bg-slate-900/50"
+                                }`}>
+                                <div className="flex items-center gap-2">
+                                    <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold ${entry.rank === 1 ? "bg-gradient-to-br from-amber-400 to-yellow-500 text-white" :
+                                            entry.rank === 2 ? "bg-gradient-to-br from-slate-300 to-slate-400 text-white" :
+                                                entry.rank === 3 ? "bg-gradient-to-br from-orange-400 to-amber-500 text-white" :
+                                                    entry.isUser ? "bg-blue-500 text-white" :
+                                                        "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                                        }`}>
+                                        {entry.rank === 1 ? <Crown className="h-3 w-3" /> :
+                                            entry.rank === 2 ? <Medal className="h-3 w-3" /> :
+                                                entry.rank === 3 ? <Medal className="h-3 w-3" /> :
+                                                    `#${entry.rank}`}
+                                    </div>
+                                    {entry.isUser ? (
+                                        <div className="h-5 w-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                                            <User className="h-3 w-3 text-blue-600" />
+                                        </div>
+                                    ) : (
+                                        <Avatar className="h-5 w-5">
+                                            <AvatarImage src={entry.avatar} />
+                                            <AvatarFallback className="text-[8px]">{entry.name.slice(0, 2)}</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                    <span className={`text-xs font-medium ${entry.isUser ? "text-blue-700 dark:text-blue-300 font-bold" : ""}`}>
+                                        {entry.name}
+                                    </span>
+                                    {entry.isUser && <Badge className="text-[8px] bg-blue-500 text-white h-4 px-1">You</Badge>}
+                                    {entry.rank === rivalInfo.rank && !entry.isUser && (
+                                        <Badge className="text-[8px] bg-rose-500 text-white h-4 px-1">Rival</Badge>
+                                    )}
+                                </div>
+                                <span className="text-xs font-semibold text-slate-500">{entry.xp.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
+
+    // Quick Actions Card
+    const QuickActionsCard = () => (
+        <Card>
+            <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm font-semibold">⚡ Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 px-4 pb-4">
+                <div className="grid grid-cols-3 gap-2">
+                    {quickActions.map((action, i) => (
+                        <Link key={i} href={action.href} className="flex flex-col items-center gap-1.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                            <div className={`h-9 w-9 rounded-full ${action.color} flex items-center justify-center`}>
+                                <action.icon className="h-4 w-4 text-white" />
+                            </div>
+                            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">{action.label}</span>
+                        </Link>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
+    );
 
     return (
-        <div className="space-y-6">
-            {/* Welcome Banner - Enhanced */}
-            <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] rounded-2xl p-6 lg:p-8 text-white relative overflow-hidden">
-                <div className="relative z-10">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        <div>
-                            <p className="text-slate-400 text-sm mb-1">Good Morning,</p>
-                            <h2 className="text-2xl lg:text-3xl font-bold mb-2">{userName}</h2>
-                            <p className="text-slate-300 text-sm">Here&apos;s your academic overview for today</p>
-                        </div>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                                <p className="text-2xl font-bold text-orange-400">3</p>
-                                <p className="text-xs text-slate-300">Pending Tasks</p>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                                <p className="text-2xl font-bold text-emerald-400">85%</p>
-                                <p className="text-xs text-slate-300">Current Score</p>
-                            </div>
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center">
-                                <p className="text-2xl font-bold text-blue-400">5th</p>
-                                <p className="text-xs text-slate-300">Class Rank</p>
-                            </div>
-                        </div>
+        <div className="space-y-4">
+            {/* ============ HEADER ============ */}
+            <div className="bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-[#0f172a] rounded-xl p-4 text-white">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="text-slate-400 text-xs">{getGreeting()},</p>
+                        <h2 className="text-xl font-bold">{userName}</h2>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-                        <span className="flex items-center gap-1">
-                            <CalendarDays className="h-3.5 w-3.5" /> {currentDate}
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" /> Term: October 2024 - March 2025
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <GraduationCap className="h-3.5 w-3.5" /> Class 10-A | Roll No: 15
-                        </span>
+                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        <span className="hidden sm:inline">{currentDate}</span>
+                        <span className="sm:hidden">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>
+                        <span className="text-slate-600">|</span>
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        <span>Class 10-A</span>
                     </div>
-                </div>
-                {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-96 h-full pointer-events-none opacity-10">
-                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                        <path fill="#FFFFFF" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,79.6,-46.9C87.4,-34.7,90.1,-20.4,90.9,-6.1C91.7,8.2,90.6,22.5,84.1,35.2C77.6,47.9,65.7,59,52.2,65.9C38.7,72.8,23.6,75.5,9.2,74C-5.2,72.5,-19,66.8,-31.6,59.3C-44.2,51.8,-55.6,42.5,-64.5,30.8C-73.4,19.1,-79.8,5,-78.3,-8.3C-76.8,-21.6,-67.4,-34.1,-56.3,-43.3C-45.2,-52.5,-32.4,-58.4,-19.4,-64.4C-6.4,-70.4,6.8,-76.5,20.8,-76.5C34.8,-76.5,52,-70.4,44.7,-76.4Z" transform="translate(100 100)" />
-                    </svg>
                 </div>
             </div>
 
-            {/* Priority Row - Attendance, Performance, Upcoming */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Today's Attendance + Weekly Overview */}
-                <Card className="lg:col-span-1">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <User className="h-4 w-4 text-emerald-500" />
-                                Attendance Overview
-                            </CardTitle>
-                            <Badge className="bg-emerald-500 text-white">Present Today</Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex items-center gap-4">
-                            <div className="relative h-28 w-28 flex-shrink-0">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie
-                                            data={attendanceData}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={35}
-                                            outerRadius={50}
-                                            startAngle={90}
-                                            endAngle={-270}
-                                            dataKey="value"
-                                        >
-                                            {attendanceData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={entry.color} strokeWidth={0} />
-                                            ))}
-                                        </Pie>
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-2xl font-bold text-emerald-600">73%</span>
-                                    <span className="text-[10px] text-slate-400">Overall</span>
-                                </div>
-                            </div>
-                            <div className="flex-1 space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600">Present Days</span>
-                                    <span className="font-semibold">146/200</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600">This Month</span>
-                                    <span className="font-semibold text-emerald-600">18/20</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600">Leaves Taken</span>
-                                    <span className="font-semibold">5</span>
-                                </div>
-                            </div>
-                        </div>
+            {/* ============ MOBILE LAYOUT (Vertical Stack) ============ */}
+            <div className="lg:hidden space-y-4">
+                {/* Section 1: Daily Missions */}
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">🎯 Daily Missions</span>
+                        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                    <DailyXPCard />
+                    <RivalAlertCard />
+                </div>
 
-                        {/* Weekly View */}
-                        <div className="pt-3 border-t">
-                            <p className="text-xs text-slate-500 mb-2">This Week</p>
-                            <div className="flex justify-between">
-                                {weeklyAttendance.map((day, i) => (
-                                    <div key={i} className="flex flex-col items-center gap-1">
-                                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium ${day.present
-                                            ? 'bg-emerald-100 text-emerald-600'
-                                            : 'bg-rose-100 text-rose-600'
-                                            }`}>
-                                            {day.present ? '✓' : '✗'}
+                {/* Section 2: Learning */}
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">📺 Pick Up Where You Left Off</span>
+                        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                    <Card>
+                        <CardHeader className="py-3 px-4">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                    <Play className="h-4 w-4 text-blue-500" />
+                                    Continue Learning
+                                </CardTitle>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={prevSlide}>
+                                        <ChevronLeft className="h-3 w-3" />
+                                    </Button>
+                                    <span className="text-[10px] text-slate-500">{carouselIndex + 1}/{continueLearning.length}</span>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={nextSlide}>
+                                        <ChevronRight className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-0 px-4 pb-4">
+                            <div className="flex items-center gap-4 bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg p-4 text-white">
+                                <div className="relative h-16 w-20 bg-slate-700/50 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    <Avatar className="h-12 w-12">
+                                        <AvatarImage src={currentItem.teacherAvatar} />
+                                        <AvatarFallback className="bg-slate-600 text-white text-lg">{currentItem.thumbnail}</AvatarFallback>
+                                    </Avatar>
+                                    {currentItem.stoppedAt && (
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 px-1 text-center">
+                                            <span className="text-[9px] text-amber-400 font-medium">▶ {currentItem.stoppedAt}</span>
                                         </div>
-                                        <span className="text-[10px] text-slate-500">{day.day}</span>
+                                    )}
+                                    {currentItem.missedTopic && (
+                                        <div className="absolute top-0 left-0 right-0 bg-amber-500 py-0.5 text-center">
+                                            <span className="text-[8px] text-white font-bold">MISSED</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                        <Badge variant="outline" className="text-[10px] border-slate-600 text-slate-300">
+                                            {currentItem.subject}
+                                        </Badge>
                                     </div>
-                                ))}
+                                    <h3 className="text-sm font-semibold truncate">{currentItem.title}</h3>
+                                    <p className="text-[10px] text-slate-400">
+                                        {currentItem.progress > 0 ? `${currentItem.progress}% complete` : "Not started"}
+                                    </p>
+                                </div>
+                                <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-xs h-8 px-3 flex-shrink-0">
+                                    <Play className="h-3 w-3 mr-1" />
+                                    {currentItem.progress > 0 ? "Resume" : "Start"}
+                                </Button>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                {/* Academic Performance Chart */}
-                <Card className="lg:col-span-1">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <BarChart3 className="h-4 w-4 text-blue-500" />
-                                Performance Trend
-                            </CardTitle>
-                            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                                <SelectTrigger className="h-7 w-[120px] text-xs">
-                                    <SelectValue placeholder="Select month" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {availableMonths.map((month) => (
-                                        <SelectItem key={month} value={month} className="text-xs">
-                                            {month}
-                                        </SelectItem>
+                {/* Section 3: Work (Active Quests) */}
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">📋 Your Work</span>
+                        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                    <Card>
+                        <CardHeader className="py-3 px-4">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                    <Scroll className="h-4 w-4 text-purple-500" />
+                                    Active Quests
+                                </CardTitle>
+                                <Link href="/student/exams" className="text-xs text-blue-600 hover:underline">View All</Link>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-0 px-4 pb-4 space-y-3">
+                            {/* Due Today */}
+                            {questsDueToday.length > 0 && (
+                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-rose-200 dark:border-rose-800 overflow-hidden">
+                                    <div className="bg-rose-50 dark:bg-rose-950/30 px-3 py-2 border-b border-rose-200 dark:border-rose-800">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+                                            <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase">🔥 Due Today</span>
+                                            <Badge className="text-[10px] bg-rose-500 text-white ml-auto">{questsDueToday.length}</Badge>
+                                        </div>
+                                    </div>
+                                    <div className="divide-y divide-rose-100 dark:divide-rose-900">
+                                        {questsDueToday.map((quest, i) => (
+                                            <div key={i} className="flex items-center justify-between p-3 border-l-4 border-rose-500">
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <Target className="h-3.5 w-3.5 text-rose-500 flex-shrink-0" />
+                                                    <span className="text-xs font-medium truncate">{quest.title}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-600">+{quest.reward} XP</Badge>
+                                                    <span className="text-[10px] text-rose-600 font-bold">⏱️ {quest.endsIn}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Upcoming - limited on mobile */}
+                            <div className="bg-slate-100/80 dark:bg-slate-800/50 rounded-lg overflow-hidden">
+                                <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-slate-400" />
+                                        <span className="text-xs font-semibold text-slate-500 uppercase">📅 Upcoming</span>
+                                        <Badge variant="outline" className="text-[10px] ml-auto">{questsUpcoming.length}</Badge>
+                                    </div>
+                                </div>
+                                <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {questsUpcoming.slice(0, 2).map((quest, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3">
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                {quest.type === "main" ? <Shield className="h-3.5 w-3.5 text-purple-500" /> : <Target className="h-3.5 w-3.5 text-slate-400" />}
+                                                <span className="text-xs font-medium truncate">{quest.title}</span>
+                                                {quest.type === "main" && <Badge className="text-[10px] bg-purple-100 text-purple-700">⚔️ Main</Badge>}
+                                            </div>
+                                            <Badge variant="outline" className="text-[10px] border-emerald-300 text-emerald-600">+{quest.reward} XP</Badge>
+                                        </div>
                                     ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-36">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={performanceData}>
-                                    <defs>
-                                        <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} domain={[60, 100]} />
-                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                                    <Area type="monotone" dataKey="score" stroke="#3b82f6" fillOpacity={1} fill="url(#colorScore)" strokeWidth={2} />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                        <div className="mt-3 pt-3 border-t flex items-center justify-between">
-                            <div className="text-center">
-                                <p className="text-lg font-bold text-slate-800">85%</p>
-                                <p className="text-[10px] text-slate-500">Current Avg</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-lg font-bold text-emerald-600 flex items-center gap-1">
-                                    <TrendingUp className="h-4 w-4" /> +8%
-                                </p>
-                                <p className="text-[10px] text-slate-500">vs Last Term</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-lg font-bold text-blue-600">A</p>
-                                <p className="text-[10px] text-slate-500">Overall Grade</p>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Upcoming Events & Deadlines */}
-                <Card className="lg:col-span-1">
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-orange-500" />
-                                Upcoming Events
-                            </CardTitle>
-                            <Link href="/student/exams" className="text-xs text-blue-600 hover:underline">View All</Link>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {upcomingEvents.map((event, i) => (
-                            <div key={i} className={`p-3 rounded-lg border ${event.urgent ? 'border-orange-200 bg-orange-50' : 'border-slate-100 bg-slate-50/50'} hover:shadow-sm transition-shadow`}>
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-start gap-2">
-                                        <div className={`h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${event.type === 'exam' ? 'bg-rose-100 text-rose-600' :
-                                            event.type === 'assignment' ? 'bg-blue-100 text-blue-600' :
-                                                event.type === 'meeting' ? 'bg-purple-100 text-purple-600' :
-                                                    'bg-emerald-100 text-emerald-600'
-                                            }`}>
-                                            {event.type === 'exam' ? <FileText className="h-4 w-4" /> :
-                                                event.type === 'assignment' ? <Upload className="h-4 w-4" /> :
-                                                    event.type === 'meeting' ? <User className="h-4 w-4" /> :
-                                                        <Calendar className="h-4 w-4" />}
+                                    {questsUpcoming.length > 2 && (
+                                        <div className="p-2 text-center">
+                                            <Link href="/student/exams" className="text-xs text-blue-600 hover:underline">+{questsUpcoming.length - 2} more →</Link>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-medium">{event.title}</p>
-                                            <p className="text-[10px] text-slate-500">{event.date} • {event.time}</p>
-                                        </div>
-                                    </div>
-                                    {event.urgent && (
-                                        <Badge className="bg-orange-500 text-white text-[10px]">Soon</Badge>
                                     )}
                                 </div>
                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-            {/* Middle Row - Today's Schedule + Subject Performance */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Today's Schedule */}
-                <Card>
-                    <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-purple-500" />
-                                Today&apos;s Schedule
-                            </CardTitle>
-                            <Button size="sm" className="h-7 text-xs bg-[#0f172a]">
-                                Monday <ChevronDown className="h-3 w-3 ml-1" />
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-2">
-                            {todaySchedule.map((item, i) => (
-                                <div key={i} className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${item.status === 'ongoing' ? 'bg-blue-50 border border-blue-200' :
-                                    item.status === 'completed' ? 'bg-slate-50 opacity-60' :
-                                        'bg-white border border-slate-100 hover:bg-slate-50'
-                                    }`}>
-                                    <div className={`text-sm font-mono font-semibold w-14 ${item.status === 'ongoing' ? 'text-blue-600' : 'text-slate-500'
-                                        }`}>
-                                        {item.time}
+                {/* Quick Actions - Horizontal Scroll on Mobile */}
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">⚡ Quick Actions</span>
+                        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                    <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                        <div className="flex gap-3 pb-2" style={{ width: "max-content" }}>
+                            {quickActions.map((action, i) => (
+                                <Link key={i} href={action.href} className="flex flex-col items-center gap-1.5 min-w-[60px]">
+                                    <div className={`h-12 w-12 rounded-full ${action.color} flex items-center justify-center shadow-md`}>
+                                        <action.icon className="h-5 w-5 text-white" />
                                     </div>
-                                    <div className="flex-1">
-                                        <p className={`font-medium text-sm ${item.status === 'completed' ? 'line-through text-slate-400' : ''}`}>
-                                            {item.subject}
-                                        </p>
-                                        {item.teacher !== '-' && (
-                                            <p className="text-[10px] text-slate-500">
-                                                {item.teacher} • Room {item.room}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        {item.status === 'completed' && <CheckCircle2 className="h-5 w-5 text-emerald-500" />}
-                                        {item.status === 'ongoing' && (
-                                            <Badge className="bg-blue-500 text-white text-[10px] animate-pulse">Now</Badge>
-                                        )}
-                                        {item.status === 'upcoming' && item.subject !== 'Break' && (
-                                            <ChevronRight className="h-5 w-5 text-slate-300" />
-                                        )}
-                                    </div>
-                                </div>
+                                    <span className="text-[10px] font-medium text-slate-600">{action.label}</span>
+                                </Link>
                             ))}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                {/* Subject-wise Performance */}
+                {/* Stats Section */}
+                <LeaderboardCard />
+
+                {/* Subject Performance */}
                 <Card>
-                    <CardHeader className="pb-3">
+                    <CardHeader className="py-3 px-4">
                         <div className="flex items-center justify-between">
                             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <BookMarked className="h-4 w-4 text-indigo-500" />
+                                <Award className="h-4 w-4 text-indigo-500" />
                                 Subject Performance
                             </CardTitle>
                             <Link href="/student/performance" className="text-xs text-blue-600 hover:underline">Details</Link>
                         </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        {subjectPerformance.map((subject, i) => (
-                            <div key={i} className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-sm font-medium">{subject.subject}</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className={`text-xs font-medium flex items-center gap-0.5 ${subject.trend === 'up' ? 'text-emerald-600' :
-                                            subject.trend === 'down' ? 'text-rose-600' : 'text-slate-500'
-                                            }`}>
-                                            {subject.trend === 'up' && <TrendingUp className="h-3 w-3" />}
-                                            {subject.trend === 'down' && <TrendingDown className="h-3 w-3" />}
+                    <CardContent className="pt-0 px-4 pb-4">
+                        <div className="grid grid-cols-2 gap-2">
+                            {subjectPerformance.map((subject, i) => (
+                                <div key={i} className={`p-2 rounded-lg border ${subject.isWeakest ? "border-rose-200 bg-rose-50" : "border-slate-100 bg-slate-50/50"}`}>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className="text-[10px] font-semibold truncate">{subject.subject}</span>
+                                        <div className="flex items-center gap-1">
+                                            <Badge variant="outline" className="text-[9px] h-4 px-1">{subject.grade}</Badge>
+                                            {subject.isWeakest && (
+                                                <Button size="icon" className="h-4 w-4 bg-rose-500 rounded-full">
+                                                    <Zap className="h-2 w-2 text-white" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <Progress value={subject.score} className={`h-1 ${subject.isWeakest ? "[&>div]:bg-rose-500" : ""}`} />
+                                    <div className="flex items-center justify-between mt-0.5">
+                                        <span className="text-[10px] font-bold">{subject.score}%</span>
+                                        <span className={`text-[9px] flex items-center ${subject.trend === "up" ? "text-emerald-600" : "text-rose-600"}`}>
+                                            {subject.trend === "up" ? <TrendingUp className="h-2 w-2" /> : <TrendingDown className="h-2 w-2" />}
                                             {subject.change}
                                         </span>
-                                        <Badge variant="outline" className="text-xs font-bold">{subject.grade}</Badge>
-                                        <span className="text-sm font-semibold w-10 text-right">{subject.score}%</span>
                                     </div>
                                 </div>
-                                <Progress value={subject.score} className="h-2" />
-                            </div>
-                        ))}
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Bottom Row - Tasks, Quick Actions, Notices */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Pending Tasks */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <Target className="h-4 w-4 text-rose-500" />
-                                Pending Tasks
-                            </CardTitle>
-                            <Badge variant="outline" className="text-rose-600 border-rose-200">{pendingTasks.length} Due</Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {pendingTasks.map((task, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 rounded-lg border hover:bg-slate-50 transition-colors">
-                                <div className={`h-2 w-2 rounded-full flex-shrink-0 ${task.priority === 'high' ? 'bg-rose-500' :
-                                    task.priority === 'medium' ? 'bg-amber-500' : 'bg-blue-500'
-                                    }`} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium truncate">{task.title}</p>
-                                    <p className="text-[10px] text-slate-500">Due: {task.due}</p>
-                                </div>
-                                <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
-                            </div>
-                        ))}
-                        <Link href="/student/resources" className="block">
-                            <Button variant="outline" className="w-full mt-2 text-xs">
-                                View All Assignments
-                            </Button>
-                        </Link>
-                    </CardContent>
-                </Card>
-
-                {/* Quick Actions - Redesigned */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                            <Award className="h-4 w-4 text-amber-500" />
-                            Quick Actions
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid grid-cols-3 gap-2">
-                            {[
-                                { label: 'Reports', icon: FileText, color: 'bg-emerald-500', href: '/student/reports' },
-                                { label: 'Leave', icon: Calendar, color: 'bg-rose-500', href: '/student/leaves' },
-                                { label: 'Resources', icon: BookOpen, color: 'bg-blue-500', href: '/student/resources' },
-                                { label: 'Exams', icon: Clock, color: 'bg-purple-500', href: '/student/exams' },
-                                { label: 'Finance', icon: GraduationCap, color: 'bg-amber-500', href: '/student/finance' },
-                                { label: 'Profile', icon: User, color: 'bg-slate-600', href: '/student/profile' },
-                            ].map((action, i) => (
-                                <Link key={i} href={action.href}>
-                                    <div className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer group">
-                                        <div className={`h-10 w-10 rounded-xl ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                            <action.icon className="h-5 w-5 text-white" />
-                                        </div>
-                                        <span className="text-[10px] font-medium text-slate-600">{action.label}</span>
-                                    </div>
-                                </Link>
                             ))}
                         </div>
                     </CardContent>
                 </Card>
+            </div>
 
-                {/* Notices */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                                <Megaphone className="h-4 w-4 text-blue-500" />
-                                Latest Notices
-                            </CardTitle>
-                            <Link href="/student/notices" className="text-xs text-blue-600 hover:underline">View All</Link>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                        {notices.map((notice, i) => (
-                            <div key={i} className="flex items-start gap-3 p-3 rounded-lg border hover:bg-slate-50 transition-colors">
-                                <div className={`h-2 w-2 rounded-full mt-1.5 flex-shrink-0 ${notice.type === 'holiday' ? 'bg-rose-500' :
-                                    notice.type === 'exam' ? 'bg-blue-500' : 'bg-amber-500'
-                                    }`} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium">{notice.title}</p>
-                                    <p className="text-[10px] text-slate-500 truncate">{notice.desc}</p>
-                                    <p className="text-[10px] text-slate-400 mt-1">{notice.time}</p>
+            {/* ============ DESKTOP LAYOUT (Newspaper 2-Column Grid) ============ */}
+            <div className="hidden lg:grid lg:grid-cols-3 gap-6">
+                {/* LEFT COLUMN - Main Content (66%) */}
+                <div className="lg:col-span-2 space-y-4">
+                    {/* 1. Continue Learning Banner */}
+                    <Card>
+                        <CardHeader className="py-3 px-4">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                    <Play className="h-4 w-4 text-blue-500" />
+                                    Continue Learning
+                                </CardTitle>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={prevSlide}>
+                                        <ChevronLeft className="h-3 w-3" />
+                                    </Button>
+                                    <span className="text-[10px] text-slate-500">{carouselIndex + 1}/{continueLearning.length}</span>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={nextSlide}>
+                                        <ChevronRight className="h-3 w-3" />
+                                    </Button>
                                 </div>
                             </div>
-                        ))}
-                    </CardContent>
-                </Card>
+                        </CardHeader>
+                        <CardContent className="pt-0 px-4 pb-4">
+                            <div className="flex items-center gap-4 bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg p-5 text-white">
+                                <div className="relative h-20 w-28 bg-slate-700/50 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                    <Avatar className="h-14 w-14">
+                                        <AvatarImage src={currentItem.teacherAvatar} />
+                                        <AvatarFallback className="bg-slate-600 text-white text-2xl">{currentItem.thumbnail}</AvatarFallback>
+                                    </Avatar>
+                                    {currentItem.stoppedAt && (
+                                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-1 px-1 text-center">
+                                            <span className="text-[10px] text-amber-400 font-medium">▶ {currentItem.stoppedAt}</span>
+                                        </div>
+                                    )}
+                                    {currentItem.missedTopic && (
+                                        <div className="absolute top-0 left-0 right-0 bg-amber-500 py-0.5 text-center">
+                                            <span className="text-[9px] text-white font-bold">MISSED</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Badge variant="outline" className="text-[10px] border-slate-600 text-slate-300">
+                                            {currentItem.subject}
+                                        </Badge>
+                                        <span className="text-[10px] text-slate-500">by {currentItem.teacher}</span>
+                                    </div>
+                                    <h3 className="text-base font-semibold mb-1">{currentItem.title}</h3>
+                                    <p className="text-xs text-slate-400 mb-2">
+                                        {currentItem.progress > 0 ? `${currentItem.progress}% complete` : "Not started"} • {currentItem.duration}
+                                    </p>
+                                    {currentItem.progress > 0 && (
+                                        <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden max-w-xs">
+                                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${currentItem.progress}%` }} />
+                                        </div>
+                                    )}
+                                </div>
+                                <Button className="bg-blue-600 hover:bg-blue-700 text-sm h-10 px-5 flex-shrink-0">
+                                    <Play className="h-4 w-4 mr-2" />
+                                    {currentItem.progress > 0 ? "Resume" : "Start"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* 2. Active Quests List */}
+                    <Card>
+                        <CardHeader className="py-3 px-4">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                    <Scroll className="h-4 w-4 text-purple-500" />
+                                    Active Quests
+                                </CardTitle>
+                                <Link href="/student/exams" className="text-xs text-blue-600 hover:underline">View All</Link>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-0 px-4 pb-4 space-y-4">
+                            {/* Due Today */}
+                            {questsDueToday.length > 0 && (
+                                <div className="bg-white dark:bg-slate-900 rounded-lg border border-rose-200 dark:border-rose-800 overflow-hidden">
+                                    <div className="bg-rose-50 dark:bg-rose-950/30 px-4 py-2.5 border-b border-rose-200 dark:border-rose-800">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+                                            <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wide">🔥 Due Today</span>
+                                            <Badge className="text-[10px] bg-rose-500 text-white ml-auto">{questsDueToday.length}</Badge>
+                                        </div>
+                                    </div>
+                                    <div className="divide-y divide-rose-100 dark:divide-rose-900">
+                                        {questsDueToday.map((quest, i) => (
+                                            <div key={i} className="flex items-center justify-between p-3.5 border-l-4 border-rose-500 hover:bg-rose-50/50 transition-colors">
+                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                    <Target className="h-4 w-4 text-rose-500 flex-shrink-0" />
+                                                    <span className="text-sm font-medium">{quest.title}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3 flex-shrink-0">
+                                                    <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600 bg-emerald-50">+{quest.reward} XP</Badge>
+                                                    <span className="text-xs text-rose-600 font-bold font-mono">⏱️ {quest.endsIn}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Upcoming */}
+                            <div className="bg-slate-100/80 dark:bg-slate-800/50 rounded-lg overflow-hidden">
+                                <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-700">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 rounded-full bg-slate-400" />
+                                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">📅 Upcoming</span>
+                                        <Badge variant="outline" className="text-[10px] ml-auto">{questsUpcoming.length}</Badge>
+                                    </div>
+                                </div>
+                                <div className="divide-y divide-slate-200 dark:divide-slate-700">
+                                    {questsUpcoming.map((quest, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3.5 border-l-4 border-transparent hover:border-slate-400 hover:bg-white/50 transition-all">
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                {quest.type === "main" ? <Shield className="h-4 w-4 text-purple-500" /> : <Target className="h-4 w-4 text-slate-400" />}
+                                                <span className="text-sm font-medium text-slate-700">{quest.title}</span>
+                                                {quest.type === "main" && <Badge className="text-[10px] bg-purple-100 text-purple-700">⚔️ Main</Badge>}
+                                            </div>
+                                            <div className="flex items-center gap-3 flex-shrink-0">
+                                                <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600">+{quest.reward} XP</Badge>
+                                                {quest.badge && <Badge variant="outline" className="text-xs border-amber-300 text-amber-600"><Trophy className="h-3 w-3 mr-1" />{quest.badge}</Badge>}
+                                                <span className="text-xs text-slate-500 font-mono">{quest.endsIn}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* 5. Subject Performance Grid */}
+                    <Card>
+                        <CardHeader className="py-3 px-4">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                    <Award className="h-4 w-4 text-indigo-500" />
+                                    Subject Performance
+                                </CardTitle>
+                                <Link href="/student/performance" className="text-xs text-blue-600 hover:underline">Details</Link>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="pt-0 px-4 pb-4">
+                            <div className="grid grid-cols-3 gap-3">
+                                {subjectPerformance.map((subject, i) => (
+                                    <div key={i} className={`p-3 rounded-lg border ${subject.isWeakest ? "border-rose-200 bg-rose-50" : "border-slate-100 bg-slate-50/50"}`}>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-semibold">{subject.subject}</span>
+                                            <div className="flex items-center gap-1">
+                                                <Badge variant="outline" className="text-[10px] h-5">{subject.grade}</Badge>
+                                                {subject.isWeakest && (
+                                                    <Button size="icon" className="h-5 w-5 bg-rose-500 rounded-full">
+                                                        <Zap className="h-2.5 w-2.5 text-white" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <Progress value={subject.score} className={`h-2 ${subject.isWeakest ? "[&>div]:bg-rose-500" : ""}`} />
+                                        <div className="flex items-center justify-between mt-1.5">
+                                            <span className="text-sm font-bold">{subject.score}%</span>
+                                            <span className={`text-[10px] flex items-center ${subject.trend === "up" ? "text-emerald-600" : "text-rose-600"}`}>
+                                                {subject.trend === "up" ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                                                {subject.change}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* RIGHT COLUMN - Gamification Sidebar (33%) */}
+                <div className="space-y-4">
+                    {/* 3. Rival Alert (Red) */}
+                    <RivalAlertCard />
+
+                    {/* 4. Daily XP Boost (Yellow) */}
+                    <DailyXPCard />
+
+                    {/* 6. Class Leaderboard */}
+                    <LeaderboardCard />
+
+                    {/* 7. Quick Actions */}
+                    <QuickActionsCard />
+                </div>
             </div>
         </div>
     );

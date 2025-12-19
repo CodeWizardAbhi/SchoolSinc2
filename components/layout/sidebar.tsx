@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -18,14 +19,24 @@ import {
     LogOut,
     Clock,
     X,
-    Building2
+    Building2,
+    Trophy,
+    Medal,
+    Flame,
+    Settings,
+    ChevronUp,
+    Plane,
+    LucideIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface SidebarProps {
-    role: "admin" | "faculty" | "student";
+    role: "admin" | "faculty" | "student" | "parent";
     isOpen: boolean;
+    isDesktop: boolean;
     onClose: () => void;
+    userName?: string;
 }
 
 interface NavSection {
@@ -33,12 +44,13 @@ interface NavSection {
     items: {
         label: string;
         href: string;
-        icon: React.ComponentType<{ className?: string }>;
+        icon: LucideIcon;
     }[];
 }
 
-export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ role, isOpen, isDesktop, onClose, userName = "Student" }: SidebarProps) {
     const pathname = usePathname();
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
     // Define sections based on role
     const getSections = (): NavSection[] => {
@@ -109,40 +121,73 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
             ];
         }
 
-        // Student
+        // Student - NEW GAMIFIED STRUCTURE
+        if (role === "student") {
+            return [
+                {
+                    title: "Home",
+                    items: [
+                        { label: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
+                    ]
+                },
+                {
+                    title: "My Journey",
+                    items: [
+                        { label: "Leaderboard", href: "/student/leaderboard", icon: Trophy },
+                        { label: "Achievements", href: "/student/achievements", icon: Medal },
+                        { label: "My Streaks", href: "/student/streaks", icon: Flame },
+                    ]
+                },
+                {
+                    title: "Academics",
+                    items: [
+                        { label: "Timetable", href: "/student/timetable", icon: Clock },
+                        { label: "Resources", href: "/student/resources", icon: BookOpen },
+                        { label: "Assignments", href: "/student/exams", icon: FileText },
+                        { label: "Grades & Reports", href: "/student/performance", icon: BarChart2 },
+                    ]
+                },
+                {
+                    title: "Campus Life",
+                    items: [
+                        { label: "Events & Notices", href: "/student/notices", icon: Calendar },
+                        { label: "Fees", href: "/student/finance", icon: CreditCard },
+                        { label: "Leave Request", href: "/student/leaves", icon: Plane },
+                    ]
+                },
+            ];
+        }
+
+        // Parent - Similar structure
         return [
             {
                 title: "Home",
                 items: [
-                    { label: "Dashboard", href: "/student/dashboard", icon: LayoutDashboard },
+                    { label: "Dashboard", href: "/parent/dashboard", icon: LayoutDashboard },
+                ]
+            },
+            {
+                title: "Child's Journey",
+                items: [
+                    { label: "Leaderboard", href: "/parent/leaderboard", icon: Trophy },
+                    { label: "Achievements", href: "/parent/achievements", icon: Medal },
                 ]
             },
             {
                 title: "Academics",
                 items: [
-                    { label: "Timetable", href: "/student/timetable", icon: Clock },
-                    { label: "Exams & Events", href: "/student/exams", icon: ClipboardList },
-                    { label: "Performance", href: "/student/performance", icon: BarChart2 },
-                    { label: "Resources", href: "/student/resources", icon: BookOpen },
+                    { label: "Timetable", href: "/parent/timetable", icon: Clock },
+                    { label: "Resources", href: "/parent/resources", icon: BookOpen },
+                    { label: "Assignments", href: "/parent/exams", icon: FileText },
+                    { label: "Grades & Reports", href: "/parent/performance", icon: BarChart2 },
                 ]
             },
             {
-                title: "Reports",
+                title: "Campus Life",
                 items: [
-                    { label: "Student Reports", href: "/student/reports", icon: FileText },
-                ]
-            },
-            {
-                title: "Services",
-                items: [
-                    { label: "Fees & Finance", href: "/student/finance", icon: CreditCard },
-                    { label: "Leave Application", href: "/student/leaves", icon: FileText },
-                ]
-            },
-            {
-                title: "Communication",
-                items: [
-                    { label: "Notices & Meetings", href: "/student/notices", icon: Megaphone },
+                    { label: "Events & Notices", href: "/parent/notices", icon: Calendar },
+                    { label: "Fees", href: "/parent/finance", icon: CreditCard },
+                    { label: "Leave Request", href: "/parent/leaves", icon: Plane },
                 ]
             },
         ];
@@ -151,11 +196,20 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
     const sections = getSections();
 
     const handleLinkClick = () => {
-        onClose();
+        if (!isDesktop) {
+            onClose();
+        }
     };
 
     const handleLogout = async () => {
         await signOut({ callbackUrl: "/" });
+    };
+
+    const getClassInfo = () => {
+        if (role === "student") return "Class 10-A";
+        if (role === "parent") return "Parent";
+        if (role === "faculty") return "Faculty";
+        return "Admin";
     };
 
     return (
@@ -171,14 +225,14 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
             {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed top-0 left-0 h-screen w-64 bg-white border-r border-slate-200 flex flex-col shadow-sm transition-transform duration-300 ease-in-out z-40",
+                    "fixed top-0 left-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-sm transition-transform duration-300 ease-in-out z-40",
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
                 {/* Logo Header */}
-                <div className="h-14 border-b border-slate-200 flex items-center justify-between px-4">
+                <div className="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4">
                     <Link href={`/${role}/dashboard`} className="flex items-center gap-2">
-                        <Building2 className="h-7 w-7 text-blue-500" />
+                        <Building2 className="h-7 w-7 text-blue-500" strokeWidth={2} />
                         <div>
                             <span className="text-lg font-bold text-blue-500">School</span>
                             <span className="text-lg font-bold text-orange-500">Sync</span>
@@ -186,23 +240,23 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                     </Link>
                     <button
                         onClick={onClose}
-                        className="p-1.5 hover:bg-slate-100 rounded-lg lg:hidden"
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg lg:hidden"
                     >
-                        <X className="h-5 w-5 text-slate-500" />
+                        <X className="h-5 w-5 text-slate-500" strokeWidth={2} />
                     </button>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-3 py-4 overflow-y-auto">
+                <nav className="flex-1 px-3 py-3 overflow-y-auto">
                     {sections.map((section, sectionIndex) => (
-                        <div key={section.title} className={cn("mb-6", sectionIndex === 0 && "mt-0")}>
-                            {/* Section Title */}
-                            <h3 className="px-3 mb-2 text-xs font-medium text-slate-400 uppercase tracking-wider">
+                        <div key={section.title} className={cn("mb-4", sectionIndex === 0 && "mt-0")}>
+                            {/* Section Title - Compact with premium typography */}
+                            <h3 className="px-3 mb-1.5 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                 {section.title}
                             </h3>
 
                             {/* Section Items */}
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                                 {section.items.map((item) => {
                                     const isActive = pathname.startsWith(item.href);
                                     return (
@@ -212,16 +266,19 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                                             prefetch={true}
                                             onClick={handleLinkClick}
                                             className={cn(
-                                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                                                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                                                 isActive
-                                                    ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
-                                                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                                    ? "bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 shadow-sm"
+                                                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
                                             )}
                                         >
-                                            <item.icon className={cn(
-                                                "h-5 w-5",
-                                                isActive ? "text-blue-600" : "text-slate-400"
-                                            )} />
+                                            <item.icon
+                                                className={cn(
+                                                    "h-[18px] w-[18px]",
+                                                    isActive ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-500"
+                                                )}
+                                                strokeWidth={2}
+                                            />
                                             {item.label}
                                         </Link>
                                     );
@@ -231,14 +288,59 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                     ))}
                 </nav>
 
-                {/* Logout */}
-                <div className="p-3 border-t border-slate-200">
+                {/* Mini Profile Footer */}
+                <div className="border-t border-slate-200 dark:border-slate-800">
+                    {/* Profile Menu (expandable) */}
+                    {isProfileMenuOpen && (
+                        <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 space-y-0.5">
+                            <Link
+                                href={`/${role}/profile`}
+                                onClick={handleLinkClick}
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <Users className="h-4 w-4" strokeWidth={2} />
+                                My Profile
+                            </Link>
+                            <Link
+                                href={`/${role}/settings`}
+                                onClick={handleLinkClick}
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                            >
+                                <Settings className="h-4 w-4" strokeWidth={2} />
+                                Settings
+                            </Link>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                            >
+                                <LogOut className="h-4 w-4" strokeWidth={2} />
+                                Logout
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Profile Strip */}
                     <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                        onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                        className="w-full px-3 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                     >
-                        <LogOut className="h-5 w-5" />
-                        Logout
+                        <Avatar className="h-9 w-9 border-2 border-blue-100 dark:border-blue-900">
+                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} />
+                            <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 text-sm font-semibold">
+                                {userName.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 text-left min-w-0">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">{userName}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400">{getClassInfo()}</p>
+                        </div>
+                        <ChevronUp
+                            className={cn(
+                                "h-4 w-4 text-slate-400 transition-transform duration-200",
+                                isProfileMenuOpen ? "rotate-0" : "rotate-180"
+                            )}
+                            strokeWidth={2}
+                        />
                     </button>
                 </div>
             </aside>

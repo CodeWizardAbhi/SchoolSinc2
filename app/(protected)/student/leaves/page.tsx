@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,10 +8,76 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileUp } from "lucide-react";
+import { FileUp, CheckCircle2, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 
 export default function StudentLeave() {
+    const [formData, setFormData] = useState({
+        fullName: "",
+        studentId: "",
+        fromDate: "",
+        toDate: "",
+        leaveType: "",
+        reason: "",
+    });
+    const [sendCopy, setSendCopy] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    const handleSubmit = () => {
+        if (!formData.fullName || !formData.studentId || !formData.fromDate || !formData.toDate || !formData.leaveType || !formData.reason) {
+            return;
+        }
+        setIsSubmitting(true);
+        setTimeout(() => {
+            setIsSubmitting(false);
+            setIsSuccess(true);
+            setTimeout(() => {
+                setIsSuccess(false);
+                setFormData({
+                    fullName: "",
+                    studentId: "",
+                    fromDate: "",
+                    toDate: "",
+                    leaveType: "",
+                    reason: "",
+                });
+                setSendCopy(false);
+            }, 3000);
+        }, 1500);
+    };
+
+    const leaveTypes = [
+        { value: "sick", label: "Sick Leave" },
+        { value: "casual", label: "Casual Leave" },
+        { value: "emergency", label: "Emergency Leave" },
+        { value: "family", label: "Family Event" },
+        { value: "other", label: "Other" },
+    ];
+
+    if (isSuccess) {
+        return (
+            <div className="space-y-6">
+                <PageHeader
+                    breadcrumb="Home / Leave Application"
+                    title="Leave Application"
+                    subtitle="Submit and track your leave requests"
+                />
+                <Card className="w-full">
+                    <CardContent className="py-16 flex flex-col items-center justify-center text-center">
+                        <div className="bg-emerald-100 dark:bg-emerald-900/30 p-6 rounded-full mb-6">
+                            <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-emerald-800 dark:text-emerald-400 mb-2">Leave Application Submitted!</h3>
+                        <p className="text-slate-600 dark:text-slate-400 max-w-md">
+                            Your leave request has been submitted successfully. You will be notified once it&apos;s reviewed by the administration.
+                        </p>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             <PageHeader
@@ -28,34 +95,50 @@ export default function StudentLeave() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-sm">Full Name</Label>
-                                <Input placeholder="Enter your Name" />
+                                <Input
+                                    placeholder="Enter your Name"
+                                    value={formData.fullName}
+                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-sm">Student ID</Label>
-                                <Input placeholder="Enter your ID" />
+                                <Input
+                                    placeholder="Enter your ID"
+                                    value={formData.studentId}
+                                    onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                                />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-sm">From Date</Label>
-                                <Input type="date" />
+                                <Input
+                                    type="date"
+                                    value={formData.fromDate}
+                                    onChange={(e) => setFormData({ ...formData, fromDate: e.target.value })}
+                                />
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-sm">To Date</Label>
-                                <Input type="date" />
+                                <Input
+                                    type="date"
+                                    value={formData.toDate}
+                                    onChange={(e) => setFormData({ ...formData, toDate: e.target.value })}
+                                />
                             </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className="text-sm">Leave Type</Label>
-                                <Select>
+                                <Select value={formData.leaveType} onValueChange={(value) => setFormData({ ...formData, leaveType: value })}>
                                     <SelectTrigger><SelectValue placeholder="Select Leave Type" /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="sick">Sick Leave</SelectItem>
-                                        <SelectItem value="casual">Casual Leave</SelectItem>
-                                        <SelectItem value="unpaid">Unpaid Leave</SelectItem>
+                                        {leaveTypes.map((type) => (
+                                            <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -71,18 +154,41 @@ export default function StudentLeave() {
 
                         <div className="space-y-2">
                             <Label className="text-sm">Reason</Label>
-                            <Textarea placeholder="Reason for Leave..." className="min-h-[100px]" />
-                            <p className="text-[10px] text-right text-muted-foreground">Max: 100</p>
+                            <Textarea
+                                placeholder="Reason for Leave..."
+                                className="min-h-[100px]"
+                                value={formData.reason}
+                                onChange={(e) => setFormData({ ...formData, reason: e.target.value.slice(0, 100) })}
+                            />
+                            <p className="text-[10px] text-right text-muted-foreground">{formData.reason.length}/100</p>
                         </div>
 
                         <div className="flex items-start gap-2">
-                            <Checkbox id="copy" className="mt-0.5" />
+                            <Checkbox
+                                id="copy"
+                                className="mt-0.5"
+                                checked={sendCopy}
+                                onCheckedChange={(checked) => setSendCopy(checked as boolean)}
+                            />
                             <label htmlFor="copy" className="text-sm text-muted-foreground">
                                 A copy will sent to your Parent Gmails
                             </label>
                         </div>
 
-                        <Button className="w-full bg-[#0f172a]">Submit</Button>
+                        <Button
+                            className="w-full bg-[#0f172a]"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || !formData.fullName || !formData.leaveType || !formData.fromDate || !formData.toDate || !formData.reason}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Submitting...
+                                </>
+                            ) : (
+                                "Submit"
+                            )}
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

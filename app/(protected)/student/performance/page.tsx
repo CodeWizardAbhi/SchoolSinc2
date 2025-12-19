@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -84,7 +85,33 @@ const improvements = [
 ];
 
 export default function StudentPerformance() {
+    // Prevent hydration mismatch with Recharts
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const overallAverage = Math.round(subjectPerformance.reduce((acc, s) => acc + s.score, 0) / subjectPerformance.length);
+
+    // Show loading skeleton until mounted
+    if (!isMounted) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-24" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-24" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-24" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-24" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

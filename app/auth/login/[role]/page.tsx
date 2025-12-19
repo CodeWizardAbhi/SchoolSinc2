@@ -9,11 +9,11 @@ export default async function RoleLoginPage({
     const { role } = await params;
     const roleKey = role.toUpperCase();
 
-    if (!["ADMIN", "FACULTY", "STUDENT"].includes(roleKey)) {
+    if (!["ADMIN", "FACULTY", "STUDENT", "PARENT"].includes(roleKey)) {
         notFound();
     }
 
     return (
-        <LoginForm role={roleKey as "ADMIN" | "FACULTY" | "STUDENT"} />
+        <LoginForm role={roleKey as "ADMIN" | "FACULTY" | "STUDENT" | "PARENT"} />
     );
 }

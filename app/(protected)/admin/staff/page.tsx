@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, MoreVertical, Phone, Filter, Mail, Briefcase, Building2 } from "lucide-react";
+import { Search, Plus, MoreVertical, Phone, Filter, Mail, Briefcase, Building2, Loader2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
     Dialog,
@@ -24,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { createFacultyUser } from "@/actions/admin-create-user";
 
 interface StaffMember {
     id: number;
@@ -45,6 +46,9 @@ export default function StaffManagementPage() {
     ]);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [newStaff, setNewStaff] = useState({
         name: "",
         email: "",
@@ -54,24 +58,51 @@ export default function StaffManagementPage() {
     });
     const [searchQuery, setSearchQuery] = useState("");
 
-    const handleAddStaff = () => {
+    const handleAddStaff = async () => {
         if (!newStaff.name || !newStaff.email || !newStaff.role || !newStaff.department) {
             return;
         }
 
-        const newMember: StaffMember = {
-            id: Date.now(),
-            name: newStaff.name,
-            email: newStaff.email,
-            role: newStaff.role,
-            department: newStaff.department,
-            contact: newStaff.contact || "Not provided",
-            status: "Active",
-        };
+        setIsLoading(true);
+        setError(null);
+        setSuccess(null);
 
-        setStaffList([newMember, ...staffList]);
-        setNewStaff({ name: "", email: "", role: "", department: "", contact: "" });
-        setIsDialogOpen(false);
+        try {
+            // Create user in database with default password
+            const result = await createFacultyUser(newStaff.email, newStaff.name);
+
+            if (result.error) {
+                setError(result.error);
+                setIsLoading(false);
+                return;
+            }
+
+            // If user created successfully, add to local state
+            const newMember: StaffMember = {
+                id: Date.now(),
+                name: newStaff.name,
+                email: newStaff.email,
+                role: newStaff.role,
+                department: newStaff.department,
+                contact: newStaff.contact || "Not provided",
+                status: "Active",
+            };
+
+            setStaffList([newMember, ...staffList]);
+            setNewStaff({ name: "", email: "", role: "", department: "", contact: "" });
+            setSuccess("Staff member added successfully! Login credentials sent to email.");
+
+            // Close dialog after a short delay to show success message
+            setTimeout(() => {
+                setIsDialogOpen(false);
+                setSuccess(null);
+            }, 1500);
+        } catch (err) {
+            console.error("Error adding staff:", err);
+            setError("Failed to create staff member. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const filteredStaff = staffList.filter(
@@ -190,16 +221,35 @@ export default function StaffManagementPage() {
                                 />
                             </div>
                         </div>
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm">
+                                {error}
+                            </div>
+                        )}
+                        {success && (
+                            <div className="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-md text-sm">
+                                {success}
+                            </div>
+                        )}
                         <DialogFooter className="gap-2 sm:gap-0">
-                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                            <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleAddStaff}
                                 className="bg-blue-600 hover:bg-blue-700"
-                                disabled={!newStaff.name || !newStaff.email || !newStaff.role || !newStaff.department}
+                                disabled={isLoading || !newStaff.name || !newStaff.email || !newStaff.role || !newStaff.department}
                             >
-                                <Plus className="mr-2 h-4 w-4" /> Add Staff
+                                {isLoading ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Creating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Plus className="mr-2 h-4 w-4" /> Add Staff
+                                    </>
+                                )}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

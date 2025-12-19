@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { SpeedGridAttendance } from "@/components/faculty/speed-grid-attendance";
 import { MatrixAttendance } from "@/components/faculty/matrix-attendance";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Users,
     UserCheck,
@@ -16,9 +18,10 @@ import {
     Calendar,
     TrendingUp,
     AlertCircle,
-    CheckCircle2,
     Download,
     BarChart3,
+    Grid3X3,
+    Table2,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
@@ -38,20 +41,48 @@ const weeklyTrend = [
 ];
 
 const lowAttendanceStudents = [
-    { name: 'Rahul Kumar', attendance: 65, absences: 14, status: 'critical' },
-    { name: 'Priya Singh', attendance: 72, absences: 11, status: 'warning' },
-    { name: 'Amit Patel', attendance: 75, absences: 10, status: 'warning' },
+    { name: 'Rahul Kumar', attendance: 65, absences: 14, status: 'critical', streak: 0 },
+    { name: 'Priya Singh', attendance: 72, absences: 11, status: 'warning', streak: 3 },
+    { name: 'Amit Patel', attendance: 75, absences: 10, status: 'warning', streak: 5 },
 ];
 
 export default function FacultyAttendancePage() {
+    const [isMounted, setIsMounted] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState("december");
     const [selectedClass, setSelectedClass] = useState("10a");
+    const [viewMode, setViewMode] = useState<"grid" | "matrix">("grid");
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    const todayDate = isMounted
+        ? new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+        : '';
 
     const totalStudents = 44;
     const presentToday = 38;
     const absentToday = 4;
     const onLeave = 2;
     const attendancePercentage = Math.round((presentToday / totalStudents) * 100);
+
+    if (!isMounted) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -60,7 +91,7 @@ export default function FacultyAttendancePage() {
                 <PageHeader
                     breadcrumb="Home / Attendance"
                     title="Attendance Sheet"
-                    subtitle="Manage and track student attendance"
+                    subtitle="Mark attendance quickly with Speed Grid"
                 />
                 <div className="flex flex-wrap gap-2">
                     <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -147,50 +178,42 @@ export default function FacultyAttendancePage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column - Attendance Matrix */}
+                {/* Left Column - Attendance Grid/Matrix */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Quick Mark Section */}
+                    {/* View Mode Toggle & Quick Mark */}
                     <Card>
                         <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-blue-500" />
-                                    Quick Attendance
-                                </CardTitle>
-                                <Badge variant="outline" className="text-xs">
-                                    Today: {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                                </Badge>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-wrap gap-3 mb-4">
-                                <Button className="bg-emerald-500 hover:bg-emerald-600 gap-2">
-                                    <CheckCircle2 className="h-4 w-4" /> Mark All Present
-                                </Button>
-                                <Button variant="outline" className="gap-2">
-                                    <UserX className="h-4 w-4" /> Mark Individual
-                                </Button>
-                            </div>
-                            <div className="flex items-center gap-4 p-4 rounded-lg bg-emerald-50 border border-emerald-200">
-                                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-                                <div>
-                                    <p className="font-medium text-emerald-800">Attendance for Class 10-A is complete</p>
-                                    <p className="text-xs text-emerald-600">Submitted at 10:30 AM today</p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                        <Calendar className="h-4 w-4 text-blue-500" />
+                                        Mark Attendance
+                                    </CardTitle>
+                                    <Badge variant="outline" className="text-xs">
+                                        Today: {todayDate}
+                                    </Badge>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Attendance Matrix */}
-                    <Card>
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-base font-semibold">Monthly Attendance Matrix</CardTitle>
-                                <Badge className="bg-blue-500">Class 10-A</Badge>
+                                {/* View Mode Toggle */}
+                                <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "grid" | "matrix")} className="w-auto">
+                                    <TabsList className="h-8">
+                                        <TabsTrigger value="grid" className="text-xs gap-1 px-3">
+                                            <Grid3X3 className="h-3.5 w-3.5" />
+                                            Speed Grid
+                                        </TabsTrigger>
+                                        <TabsTrigger value="matrix" className="text-xs gap-1 px-3">
+                                            <Table2 className="h-3.5 w-3.5" />
+                                            Matrix
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-0 sm:p-6 sm:pt-0">
-                            <MatrixAttendance />
+                        <CardContent className="p-0">
+                            {viewMode === "grid" ? (
+                                <SpeedGridAttendance />
+                            ) : (
+                                <MatrixAttendance />
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -286,7 +309,14 @@ export default function FacultyAttendancePage() {
                                 <div key={i} className={`p-3 rounded-lg border ${student.status === 'critical' ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'
                                     }`}>
                                     <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-medium">{student.name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">{student.name}</span>
+                                            {student.streak > 0 && (
+                                                <Badge variant="outline" className="text-[8px] px-1 py-0 h-4 text-orange-600 border-orange-200">
+                                                    🔥{student.streak}
+                                                </Badge>
+                                            )}
+                                        </div>
                                         <Badge className={`text-[10px] ${student.status === 'critical' ? 'bg-rose-500' : 'bg-amber-500'
                                             }`}>
                                             {student.attendance}%

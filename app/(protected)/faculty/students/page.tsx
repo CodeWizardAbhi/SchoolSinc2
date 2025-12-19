@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/ui/page-header";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
 import {
     Search,
     Users,
@@ -24,6 +33,14 @@ import {
     GraduationCap,
     Award,
     Clock,
+    Activity,
+    Medal,
+    Shield,
+    Heart,
+    Sparkles,
+    Crown,
+    Flame,
+    Zap,
 } from "lucide-react";
 import {
     Select,
@@ -34,14 +51,14 @@ import {
 } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar } from 'recharts';
 
-// Mock data
+// Mock data with engagement score (Fix 8)
 const students = [
-    { id: 'ST001', name: 'Rahul Kumar', class: '10-A', rollNo: 15, attendance: 92, avgScore: 85, status: 'excellent', image: 'rahul' },
-    { id: 'ST002', name: 'Priya Singh', class: '10-A', rollNo: 18, attendance: 88, avgScore: 78, status: 'good', image: 'priya' },
-    { id: 'ST003', name: 'Amit Patel', class: '10-A', rollNo: 8, attendance: 65, avgScore: 62, status: 'at-risk', image: 'amit' },
-    { id: 'ST004', name: 'Neha Sharma', class: '10-A', rollNo: 22, attendance: 95, avgScore: 92, status: 'excellent', image: 'neha' },
-    { id: 'ST005', name: 'Vikram Singh', class: '10-A', rollNo: 28, attendance: 72, avgScore: 68, status: 'needs-attention', image: 'vikram' },
-    { id: 'ST006', name: 'Anjali Gupta', class: '10-A', rollNo: 5, attendance: 90, avgScore: 82, status: 'good', image: 'anjali' },
+    { id: 'ST001', name: 'Rahul Kumar', class: '10-A', rollNo: 15, attendance: 92, avgScore: 85, engagement: 88, status: 'excellent', image: 'rahul', badges: ['Class Monitor', 'Math Wizard'] },
+    { id: 'ST002', name: 'Priya Singh', class: '10-A', rollNo: 18, attendance: 88, avgScore: 78, engagement: 65, status: 'good', image: 'priya', badges: [] },
+    { id: 'ST003', name: 'Amit Patel', class: '10-A', rollNo: 8, attendance: 65, avgScore: 82, engagement: 35, status: 'suspicious', image: 'amit', badges: [] },
+    { id: 'ST004', name: 'Neha Sharma', class: '10-A', rollNo: 22, attendance: 95, avgScore: 92, engagement: 95, status: 'excellent', image: 'neha', badges: ['Star Performer', 'Helpful'] },
+    { id: 'ST005', name: 'Vikram Singh', class: '10-A', rollNo: 28, attendance: 72, avgScore: 68, engagement: 45, status: 'needs-attention', image: 'vikram', badges: [] },
+    { id: 'ST006', name: 'Anjali Gupta', class: '10-A', rollNo: 5, attendance: 90, avgScore: 82, engagement: 78, status: 'good', image: 'anjali', badges: ['Most Helpful'] },
 ];
 
 const performanceHistory = [
@@ -67,25 +84,107 @@ const recentActivity = [
     { type: 'achievement', title: 'Won Math Quiz', date: 'Dec 02', status: 'award' },
 ];
 
+// Fix 9: Available badges for bestowal
+const availableBadges = [
+    { id: 'monitor', name: 'Class Monitor', icon: '🎖️', description: 'Leadership in classroom', color: 'bg-blue-500' },
+    { id: 'helpful', name: 'Most Helpful', icon: '🤝', description: 'Always helps classmates', color: 'bg-emerald-500' },
+    { id: 'star', name: 'Star Performer', icon: '⭐', description: 'Outstanding academic achievement', color: 'bg-amber-500' },
+    { id: 'creative', name: 'Creative Mind', icon: '🎨', description: 'Innovative thinking', color: 'bg-purple-500' },
+    { id: 'punctual', name: 'Mr/Ms Punctual', icon: '⏰', description: 'Always on time', color: 'bg-rose-500' },
+    { id: 'sports', name: 'Sports Star', icon: '🏆', description: 'Sports excellence', color: 'bg-orange-500' },
+    { id: 'team', name: 'Team Player', icon: '👥', description: 'Great collaboration', color: 'bg-cyan-500' },
+    { id: 'curious', name: 'Curious Explorer', icon: '🔍', description: 'Asks great questions', color: 'bg-indigo-500' },
+];
+
 export default function FacultyStudentsPage() {
+    const [isMounted, setIsMounted] = useState(false);
+    const [studentList, setStudentList] = useState(students);
     const [selectedStudent, setSelectedStudent] = useState(students[0]);
     const [searchQuery, setSearchQuery] = useState("");
     const [feedback, setFeedback] = useState("");
+    const [selectedClass, setSelectedClass] = useState("10a");
+    const [feedbackType, setFeedbackType] = useState("general");
+    const [badgeDialogOpen, setBadgeDialogOpen] = useState(false);
+    const [selectedBadge, setSelectedBadge] = useState<string | null>(null);
 
-    const filteredStudents = students.filter(s =>
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    const filteredStudents = studentList.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         s.rollNo.toString().includes(searchQuery)
     );
+
+    // Fix 9: Award badge handler
+    const handleAwardBadge = () => {
+        if (!selectedBadge) return;
+
+        const badge = availableBadges.find(b => b.id === selectedBadge);
+        if (!badge) return;
+
+        // Update student's badges
+        setStudentList(prev => prev.map(s =>
+            s.id === selectedStudent.id
+                ? { ...s, badges: [...s.badges, badge.name] }
+                : s
+        ));
+
+        // Update selected student
+        setSelectedStudent(prev => ({
+            ...prev,
+            badges: [...prev.badges, badge.name]
+        }));
+
+        setBadgeDialogOpen(false);
+        setSelectedBadge(null);
+
+        alert(`Badge "${badge.name}" awarded to ${selectedStudent.name}! This will appear in their Community > Achievements shelf.`);
+    };
+
+    // Fix 8: Get engagement status and color
+    const getEngagementStatus = (engagement: number, avgScore: number) => {
+        if (avgScore >= 80 && engagement < 50) {
+            return { status: 'Suspicious', color: 'text-rose-600', bgColor: 'bg-rose-100', message: '⚠️ High grades but low engagement - may need attention' };
+        }
+        if (engagement >= 80) {
+            return { status: 'Highly Engaged', color: 'text-emerald-600', bgColor: 'bg-emerald-100', message: '' };
+        }
+        if (engagement >= 50) {
+            return { status: 'Moderately Engaged', color: 'text-amber-600', bgColor: 'bg-amber-100', message: '' };
+        }
+        return { status: 'Low Engagement', color: 'text-rose-600', bgColor: 'bg-rose-100', message: 'May be disinterested or struggling' };
+    };
+
+    if (!isMounted) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-1 bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                    <div className="lg:col-span-2 bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                </div>
+            </div>
+        );
+    }
+
+    const engagementInfo = getEngagementStatus(selectedStudent.engagement, selectedStudent.avgScore);
 
     return (
         <div className="space-y-6">
             <PageHeader
                 breadcrumb="Home / Students"
                 title="Student Details"
-                subtitle="View performance and provide feedback"
+                subtitle="View player stats and award badges"
             />
 
-            {/* Stats Row */}
+            {/* Stats Row - Updated with Engagement */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="pt-4 pb-4">
@@ -95,7 +194,7 @@ export default function FacultyStudentsPage() {
                             </div>
                             <div>
                                 <p className="text-xs text-muted-foreground">Total Students</p>
-                                <p className="text-xl font-bold">{students.length}</p>
+                                <p className="text-xl font-bold">{studentList.length}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -113,15 +212,16 @@ export default function FacultyStudentsPage() {
                         </div>
                     </CardContent>
                 </Card>
+                {/* Fix 8: Engagement Stat Card */}
                 <Card>
                     <CardContent className="pt-4 pb-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                            <div className="h-10 w-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                                <Activity className="h-5 w-5 text-purple-600" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">At-Risk</p>
-                                <p className="text-xl font-bold text-amber-600">2</p>
+                                <p className="text-xs text-muted-foreground">Avg Engagement</p>
+                                <p className="text-xl font-bold text-purple-600">68%</p>
                             </div>
                         </div>
                     </CardContent>
@@ -129,12 +229,12 @@ export default function FacultyStudentsPage() {
                 <Card>
                     <CardContent className="pt-4 pb-4">
                         <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-purple-100 flex items-center justify-center">
-                                <Award className="h-5 w-5 text-purple-600" />
+                            <div className="h-10 w-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                                <Award className="h-5 w-5 text-amber-600" />
                             </div>
                             <div>
-                                <p className="text-xs text-muted-foreground">Top Performers</p>
-                                <p className="text-xl font-bold text-purple-600">4</p>
+                                <p className="text-xs text-muted-foreground">Badges Awarded</p>
+                                <p className="text-xl font-bold text-amber-600">12</p>
                             </div>
                         </div>
                     </CardContent>
@@ -148,7 +248,7 @@ export default function FacultyStudentsPage() {
                         <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
                                 <CardTitle className="text-base font-semibold">Class 10-A</CardTitle>
-                                <Select defaultValue="10a">
+                                <Select value={selectedClass} onValueChange={setSelectedClass}>
                                     <SelectTrigger className="w-24 h-8 text-xs">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -156,6 +256,7 @@ export default function FacultyStudentsPage() {
                                         <SelectItem value="10a">10-A</SelectItem>
                                         <SelectItem value="10b">10-B</SelectItem>
                                         <SelectItem value="9a">9-A</SelectItem>
+                                        <SelectItem value="9b">9-B</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -171,34 +272,61 @@ export default function FacultyStudentsPage() {
                                 />
                             </div>
                             <div className="space-y-2 max-h-[500px] overflow-y-auto">
-                                {filteredStudents.map((student) => (
-                                    <div
-                                        key={student.id}
-                                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${selectedStudent.id === student.id
-                                            ? 'border-blue-500 bg-blue-50'
-                                            : 'hover:bg-slate-50'
-                                            }`}
-                                        onClick={() => setSelectedStudent(student)}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-10 w-10">
-                                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.image}`} />
-                                                <AvatarFallback>{student.name.substring(0, 2)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{student.name}</p>
-                                                <p className="text-[10px] text-muted-foreground">Roll No: {student.rollNo}</p>
+                                {filteredStudents.map((student) => {
+                                    const engInfo = getEngagementStatus(student.engagement, student.avgScore);
+                                    return (
+                                        <div
+                                            key={student.id}
+                                            className={`p-3 rounded-lg border cursor-pointer transition-colors ${selectedStudent.id === student.id
+                                                ? 'border-blue-500 bg-blue-50'
+                                                : 'hover:bg-slate-50'
+                                                }`}
+                                            onClick={() => setSelectedStudent(student)}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-10 w-10">
+                                                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${student.image}`} />
+                                                    <AvatarFallback>{student.name.substring(0, 2)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium truncate">{student.name}</p>
+                                                    <div className="flex items-center gap-1">
+                                                        <p className="text-[10px] text-muted-foreground">Roll No: {student.rollNo}</p>
+                                                        {student.status === 'suspicious' && (
+                                                            <AlertTriangle className="h-3 w-3 text-rose-500" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <Badge className={`text-[10px] ${student.status === 'excellent' ? 'bg-emerald-500' :
+                                                        student.status === 'good' ? 'bg-blue-500' :
+                                                            student.status === 'suspicious' ? 'bg-rose-500' :
+                                                                'bg-amber-500'
+                                                        }`}>
+                                                        {student.avgScore}%
+                                                    </Badge>
+                                                    <p className={`text-[9px] mt-0.5 ${engInfo.color}`}>
+                                                        {student.engagement}% engaged
+                                                    </p>
+                                                </div>
                                             </div>
-                                            <Badge className={`text-[10px] ${student.status === 'excellent' ? 'bg-emerald-500' :
-                                                student.status === 'good' ? 'bg-blue-500' :
-                                                    student.status === 'at-risk' ? 'bg-rose-500' :
-                                                        'bg-amber-500'
-                                                }`}>
-                                                {student.avgScore}%
-                                            </Badge>
+                                            {student.badges.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    {student.badges.slice(0, 2).map((badge, i) => (
+                                                        <Badge key={i} variant="outline" className="text-[8px] px-1 py-0 h-4">
+                                                            {badge}
+                                                        </Badge>
+                                                    ))}
+                                                    {student.badges.length > 2 && (
+                                                        <Badge variant="outline" className="text-[8px] px-1 py-0 h-4">
+                                                            +{student.badges.length - 2}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </CardContent>
                     </Card>
@@ -224,15 +352,17 @@ export default function FacultyStudentsPage() {
                                         </div>
                                         <Badge className={`${selectedStudent.status === 'excellent' ? 'bg-emerald-500' :
                                             selectedStudent.status === 'good' ? 'bg-blue-500' :
-                                                selectedStudent.status === 'at-risk' ? 'bg-rose-500' :
+                                                selectedStudent.status === 'suspicious' ? 'bg-rose-500' :
                                                     'bg-amber-500'
                                             }`}>
                                             {selectedStudent.status === 'excellent' ? 'Excellent' :
                                                 selectedStudent.status === 'good' ? 'Good' :
-                                                    selectedStudent.status === 'at-risk' ? 'At Risk' : 'Needs Attention'}
+                                                    selectedStudent.status === 'suspicious' ? 'Suspicious' : 'Needs Attention'}
                                         </Badge>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-4 mt-4">
+
+                                    {/* Fix 8: Stats including Engagement Score */}
+                                    <div className="grid grid-cols-4 gap-3 mt-4">
                                         <div className="text-center p-3 rounded-lg bg-slate-50">
                                             <p className="text-2xl font-bold text-blue-600">{selectedStudent.avgScore}%</p>
                                             <p className="text-[10px] text-muted-foreground">Avg Score</p>
@@ -241,11 +371,40 @@ export default function FacultyStudentsPage() {
                                             <p className="text-2xl font-bold text-emerald-600">{selectedStudent.attendance}%</p>
                                             <p className="text-[10px] text-muted-foreground">Attendance</p>
                                         </div>
+                                        {/* Fix 8: Engagement Score */}
+                                        <div className={`text-center p-3 rounded-lg ${engagementInfo.bgColor}`}>
+                                            <p className={`text-2xl font-bold ${engagementInfo.color}`}>{selectedStudent.engagement}%</p>
+                                            <p className="text-[10px] text-muted-foreground">Engagement</p>
+                                        </div>
                                         <div className="text-center p-3 rounded-lg bg-slate-50">
                                             <p className="text-2xl font-bold text-purple-600">5th</p>
                                             <p className="text-[10px] text-muted-foreground">Class Rank</p>
                                         </div>
                                     </div>
+
+                                    {/* Fix 8: Engagement Warning */}
+                                    {engagementInfo.message && (
+                                        <div className="mt-3 p-3 rounded-lg bg-rose-50 border border-rose-200">
+                                            <p className="text-xs text-rose-600 flex items-center gap-2">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                {engagementInfo.message}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Existing Badges */}
+                                    {selectedStudent.badges.length > 0 && (
+                                        <div className="mt-3">
+                                            <p className="text-[10px] text-muted-foreground mb-1">Earned Badges:</p>
+                                            <div className="flex flex-wrap gap-1">
+                                                {selectedStudent.badges.map((badge, i) => (
+                                                    <Badge key={i} className="bg-purple-100 text-purple-700 text-xs">
+                                                        {badge}
+                                                    </Badge>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex gap-2 mt-4">
@@ -255,6 +414,58 @@ export default function FacultyStudentsPage() {
                                 <Button variant="outline" size="sm" className="flex-1 gap-1">
                                     <Mail className="h-3 w-3" /> Send Email
                                 </Button>
+                                {/* Fix 9: Award Badge Button */}
+                                <Dialog open={badgeDialogOpen} onOpenChange={setBadgeDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button size="sm" className="flex-1 gap-1 bg-purple-500 hover:bg-purple-600">
+                                            <Medal className="h-3 w-3" /> Award Badge
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-lg">
+                                        <DialogHeader>
+                                            <DialogTitle className="flex items-center gap-2">
+                                                <Medal className="h-5 w-5 text-purple-500" />
+                                                Award Badge to {selectedStudent.name}
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Select a badge to award. This will appear in the student&apos;s Community &gt; Achievements shelf.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <div className="grid grid-cols-2 gap-3 py-4">
+                                            {availableBadges.map((badge) => (
+                                                <div
+                                                    key={badge.id}
+                                                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedBadge === badge.id
+                                                            ? 'border-purple-500 bg-purple-50'
+                                                            : 'border-slate-200 hover:border-slate-300'
+                                                        }`}
+                                                    onClick={() => setSelectedBadge(badge.id)}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-2xl">{badge.icon}</span>
+                                                        <div>
+                                                            <p className="text-sm font-medium">{badge.name}</p>
+                                                            <p className="text-[10px] text-muted-foreground">{badge.description}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setBadgeDialogOpen(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                className="bg-purple-500 hover:bg-purple-600 gap-2"
+                                                onClick={handleAwardBadge}
+                                                disabled={!selectedBadge}
+                                            >
+                                                <Sparkles className="h-4 w-4" />
+                                                Award Badge
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                                 <Button size="sm" className="flex-1 gap-1 bg-[#0f172a]">
                                     <GraduationCap className="h-3 w-3" /> Full Report
                                 </Button>
@@ -355,7 +566,7 @@ export default function FacultyStudentsPage() {
                                     onChange={(e) => setFeedback(e.target.value)}
                                 />
                                 <div className="flex gap-2">
-                                    <Select defaultValue="general">
+                                    <Select value={feedbackType} onValueChange={setFeedbackType}>
                                         <SelectTrigger className="w-32 h-9 text-xs">
                                             <SelectValue />
                                         </SelectTrigger>

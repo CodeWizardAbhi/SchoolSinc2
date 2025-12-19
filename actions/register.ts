@@ -10,7 +10,7 @@ const RegisterSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     name: z.string().min(2),
-    role: z.enum(["STUDENT", "FACULTY", "ADMIN"]),
+    role: z.enum(["STUDENT", "FACULTY", "ADMIN", "PARENT"]),
 });
 
 export async function registerUser(formData: FormData) {

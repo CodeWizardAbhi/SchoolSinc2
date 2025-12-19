@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -24,7 +24,6 @@ import {
     UserCog,
     BookOpen,
 } from "lucide-react";
-import { useState } from "react";
 import Link from "next/link";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, CartesianGrid } from 'recharts';
 
@@ -87,13 +86,44 @@ const classPerformance = [
 ];
 
 export default function AdminDashboardClient({ userName }: AdminDashboardClientProps) {
-    const [date, setDate] = useState<Date | undefined>(new Date());
-    const currentDate = new Date().toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
+    // Prevent hydration mismatch with Recharts
+    const [isMounted, setIsMounted] = useState(false);
+    // Initialize date to undefined for SSR, set actual date after mount
+    const [date, setDate] = useState<Date | undefined>(undefined);
+
+    useEffect(() => {
+        setIsMounted(true);
+        setDate(new Date());
+    }, []);
+
+    // Only compute current date on client to avoid hydration mismatch
+    const currentDate = isMounted
+        ? new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        })
+        : '';
+
+    // Show loading skeleton until mounted
+    if (!isMounted) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-2xl h-48" />
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div className="xl:col-span-2 bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-96" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

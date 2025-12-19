@@ -12,6 +12,7 @@ enum Role {
   ADMIN
   FACULTY
   STUDENT
+  PARENT
 }
 
 model User {

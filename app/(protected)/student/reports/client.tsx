@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -44,6 +45,32 @@ const leaderboardData = [
 ];
 
 export default function ReportsClient({ userName }: ReportsClientProps) {
+    // Prevent hydration mismatch with Recharts
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
+    // Show loading skeleton until mounted
+    if (!isMounted) {
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-8 w-48" />
+                <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-12" />
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-20" />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-72" />
+                    <div className="bg-slate-200 dark:bg-slate-800 rounded-xl h-72" />
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="space-y-6">
             {/* Breadcrumb */}

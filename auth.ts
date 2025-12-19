@@ -18,7 +18,7 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
                     .object({
                         email: z.string().email(),
                         password: z.string().min(6),
-                        role: z.enum(["ADMIN", "FACULTY", "STUDENT"]).optional(),
+                        role: z.enum(["ADMIN", "FACULTY", "STUDENT", "PARENT"]).optional(),
                     })
                     .safeParse(credentials);
 

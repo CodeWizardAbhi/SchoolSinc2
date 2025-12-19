@@ -5,12 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { UploadCloud, FileText, X } from "lucide-react";
-import { toast } from "sonner"; // Assuming sonner is installed, or use standard toast
+import { UploadCloud, FileText, X, CheckCircle2 } from "lucide-react";
 
 export function SyllabusUpload() {
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [academicYear, setAcademicYear] = useState("2024-2025");
+    const [selectedClass, setSelectedClass] = useState("");
+    const [selectedSubject, setSelectedSubject] = useState("");
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -19,18 +22,40 @@ export function SyllabusUpload() {
     };
 
     const handleUpload = () => {
-        if (!file) {
-            toast.error("Please select a file to upload");
+        if (!file || !selectedClass || !selectedSubject) {
             return;
         }
         setLoading(true);
         // Simulate upload delay
         setTimeout(() => {
             setLoading(false);
-            setFile(null);
-            toast.success("Syllabus uploaded successfully!");
+            setSuccess(true);
+            setTimeout(() => {
+                setFile(null);
+                setSuccess(false);
+                setSelectedClass("");
+                setSelectedSubject("");
+            }, 2000);
         }, 1500);
     };
+
+    const classes = [
+        { value: "10a", label: "Class 10 A" },
+        { value: "10b", label: "Class 10 B" },
+        { value: "9a", label: "Class 9 A" },
+        { value: "9b", label: "Class 9 B" },
+        { value: "8a", label: "Class 8 A" },
+        { value: "8b", label: "Class 8 B" },
+    ];
+
+    const subjects = [
+        { value: "math", label: "Mathematics" },
+        { value: "science", label: "Science" },
+        { value: "english", label: "English" },
+        { value: "social", label: "Social Studies" },
+        { value: "nepali", label: "Nepali" },
+        { value: "computer", label: "Computer Science" },
+    ];
 
     return (
         <Card>
@@ -42,11 +67,12 @@ export function SyllabusUpload() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Academic Year</Label>
-                        <Select defaultValue="2024-2025">
+                        <Select value={academicYear} onValueChange={setAcademicYear}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select Year" />
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem value="2023-2024">2023 - 2024</SelectItem>
                                 <SelectItem value="2024-2025">2024 - 2025</SelectItem>
                                 <SelectItem value="2025-2026">2025 - 2026</SelectItem>
                             </SelectContent>
@@ -55,14 +81,14 @@ export function SyllabusUpload() {
 
                     <div className="space-y-2">
                         <Label>Classes</Label>
-                        <Select>
+                        <Select value={selectedClass} onValueChange={setSelectedClass}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select Class" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="10a">Class 10 A</SelectItem>
-                                <SelectItem value="10b">Class 10 B</SelectItem>
-                                <SelectItem value="9a">Class 9 A</SelectItem>
+                                {classes.map((cls) => (
+                                    <SelectItem key={cls.value} value={cls.value}>{cls.label}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
@@ -70,19 +96,27 @@ export function SyllabusUpload() {
 
                 <div className="space-y-2">
                     <Label>Subject</Label>
-                    <Select>
+                    <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select Subject" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="math">Mathematics</SelectItem>
-                            <SelectItem value="science">Science</SelectItem>
-                            <SelectItem value="english">English</SelectItem>
+                            {subjects.map((subject) => (
+                                <SelectItem key={subject.value} value={subject.value}>{subject.label}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
 
-                {!file ? (
+                {success ? (
+                    <div className="border border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-6 flex flex-col items-center justify-center text-center">
+                        <div className="bg-emerald-100 dark:bg-emerald-900/30 p-4 rounded-full mb-4">
+                            <CheckCircle2 className="h-8 w-8 text-emerald-600" />
+                        </div>
+                        <h4 className="font-semibold text-emerald-800 dark:text-emerald-400">Syllabus Uploaded Successfully!</h4>
+                        <p className="text-sm text-emerald-600 mt-1">The file has been saved to the server.</p>
+                    </div>
+                ) : !file ? (
                     <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-10 flex flex-col items-center justify-center text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer relative">
                         <input
                             type="file"
@@ -114,11 +148,11 @@ export function SyllabusUpload() {
                 )}
 
                 <div className="flex justify-end gap-3 pt-4 border-t">
-                    <Button variant="ghost" onClick={() => setFile(null)}>Cancel</Button>
+                    <Button variant="ghost" onClick={() => { setFile(null); setSelectedClass(""); setSelectedSubject(""); }}>Cancel</Button>
                     <Button
                         className="bg-[#0f172a]"
                         onClick={handleUpload}
-                        disabled={loading || !file}
+                        disabled={loading || !file || !selectedClass || !selectedSubject}
                     >
                         {loading ? "Uploading..." : "Update Syllabus"}
                     </Button>

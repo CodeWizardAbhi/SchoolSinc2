@@ -19,7 +19,8 @@ export const authConfig = {
             const isOnAdminPortal = nextUrl.pathname.startsWith("/admin");
             const isOnFacultyPortal = nextUrl.pathname.startsWith("/faculty");
             const isOnStudentPortal = nextUrl.pathname.startsWith("/student");
-            const isOnProtectedRoute = isOnAdminPortal || isOnFacultyPortal || isOnStudentPortal;
+            const isOnParentPortal = nextUrl.pathname.startsWith("/parent");
+            const isOnProtectedRoute = isOnAdminPortal || isOnFacultyPortal || isOnStudentPortal || isOnParentPortal;
 
             if (isOnProtectedRoute) {
                 if (!isLoggedIn) {
@@ -30,6 +31,8 @@ export const authConfig = {
                         return Response.redirect(new URL("/auth/login/faculty", nextUrl));
                     } else if (isOnStudentPortal) {
                         return Response.redirect(new URL("/auth/login/student", nextUrl));
+                    } else if (isOnParentPortal) {
+                        return Response.redirect(new URL("/auth/login/parent", nextUrl));
                     }
                     return false;
                 }
@@ -39,7 +42,8 @@ export const authConfig = {
                     const roleToPortal: Record<string, string> = {
                         'ADMIN': '/admin',
                         'FACULTY': '/faculty',
-                        'STUDENT': '/student'
+                        'STUDENT': '/student',
+                        'PARENT': '/parent'
                     };
 
                     const allowedPortal = roleToPortal[userRole];
@@ -54,6 +58,9 @@ export const authConfig = {
                     if (isOnStudentPortal && userRole !== 'STUDENT') {
                         return Response.redirect(new URL(`${allowedPortal}/dashboard`, nextUrl));
                     }
+                    if (isOnParentPortal && userRole !== 'PARENT') {
+                        return Response.redirect(new URL(`${allowedPortal}/dashboard`, nextUrl));
+                    }
                 }
 
                 return true;
@@ -64,7 +71,8 @@ export const authConfig = {
                 const roleToPortal: Record<string, string> = {
                     'ADMIN': '/admin/dashboard',
                     'FACULTY': '/faculty/dashboard',
-                    'STUDENT': '/student/dashboard'
+                    'STUDENT': '/student/dashboard',
+                    'PARENT': '/parent/dashboard'
                 };
                 const redirectUrl = userRole ? roleToPortal[userRole] : '/';
                 if (redirectUrl && redirectUrl !== '/') {

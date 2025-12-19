@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+// Progress removed - not used
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
@@ -12,7 +12,7 @@ import {
     Calendar,
     Trophy,
     Zap,
-    Target,
+    // Target removed - not used
     Gift,
     Star,
     CheckCircle2,
@@ -85,7 +85,7 @@ export default function StreaksPage() {
     const [isMounted, setIsMounted] = useState(false);
     const [xp, setXp] = useState(INITIAL_XP);
     const [freezes, setFreezes] = useState(INITIAL_FREEZES);
-    const [calendar, setCalendar] = useState<any[]>([]);
+    const [calendar, setCalendar] = useState<Array<{ date: Date; dateStr: string; day: number; dayName: string; isToday: boolean; status: string }>>([]);
     const [shopOpen, setShopOpen] = useState(false);
 
     useEffect(() => {
@@ -120,9 +120,9 @@ export default function StreaksPage() {
 
     const currentStreak = 7;
     const longestStreak = 14;
-    const todayCompleted = true;
-    const weeklyGoal = 5;
-    const weeklyProgress = 4;
+    // Future use: const todayCompleted = true;
+    // Future use: const weeklyGoal = 5;
+    // Future use: const weeklyProgress = 4;
 
     return (
         <div className="space-y-6">

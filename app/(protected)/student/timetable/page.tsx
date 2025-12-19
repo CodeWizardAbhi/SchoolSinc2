@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
-import { Clock, MapPin, BookOpen, ExternalLink, Radio } from "lucide-react";
+import { Clock, MapPin, BookOpen, ExternalLink } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +76,9 @@ const isLiveSlot = (day: string, timeRange: string) => {
 
     const parseTime = (t: string) => {
         const [time, period] = t.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
+        const [h, m] = time.split(":").map(Number);
+        let hours = h;
+        const minutes = m;
         if (period === "PM" && hours !== 12) hours += 12;
         if (period === "AM" && hours === 12) hours = 0;
         return hours * 60 + minutes;
@@ -91,7 +93,7 @@ const isLiveSlot = (day: string, timeRange: string) => {
 
 export default function StudentTimetable() {
     const [selectedDay, setSelectedDay] = useState("monday");
-    const [currentTime, setCurrentTime] = useState(new Date());
+    const [, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
         // Set initial day to today if it's a weekday
@@ -211,7 +213,7 @@ export default function StudentTimetable() {
                         <Card
                             key={i}
                             className={`p-4 relative overflow-hidden transition-all ${row.isBreak ? 'bg-slate-50 border-dashed' :
-                                    isLive ? 'border-blue-500 shadow-md bg-blue-50/30' : ''
+                                isLive ? 'border-blue-500 shadow-md bg-blue-50/30' : ''
                                 }`}
                         >
                             {isLive && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500" />}

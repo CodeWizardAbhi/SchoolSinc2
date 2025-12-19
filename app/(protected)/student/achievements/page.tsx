@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+// Progress removed - not used
 import {
     Trophy,
     Flame,
     Target,
     Clock,
     Zap,
-    Award,
+    // Award removed - not used
     Crown,
     Shield,
     Brain,
@@ -193,13 +193,13 @@ export default function AchievementsPage() {
                                 <div className="flex items-start gap-4">
                                     {/* Icon / Sticker */}
                                     <div className={`relative h-16 w-16 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${isUnlocked
-                                            ? "bg-white shadow-sm border border-white/50"
-                                            : "bg-slate-50 dark:bg-slate-800"
+                                        ? "bg-white shadow-sm border border-white/50"
+                                        : "bg-slate-50 dark:bg-slate-800"
                                         }`}>
                                         <Icon
                                             className={`h-8 w-8 transition-all duration-300 ${isUnlocked
-                                                    ? `${rarity.text} fill-current filter drop-shadow-sm`
-                                                    : "text-slate-300 dark:text-slate-600"
+                                                ? `${rarity.text} fill-current filter drop-shadow-sm`
+                                                : "text-slate-300 dark:text-slate-600"
                                                 }`}
                                             strokeWidth={isUnlocked ? 1.5 : 1}
                                         />

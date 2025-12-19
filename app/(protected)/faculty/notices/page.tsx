@@ -19,7 +19,7 @@ import {
     Plus,
     Check,
     Users,
-    AlertCircle,
+
     FileText,
     Megaphone,
 } from "lucide-react";
@@ -217,8 +217,8 @@ export default function FacultyNoticesPage() {
                                                             Read Receipt
                                                         </span>
                                                         <span className={`text-sm font-bold ${readPercentage >= 80 ? 'text-emerald-600' :
-                                                                readPercentage >= 50 ? 'text-amber-600' :
-                                                                    'text-rose-600'
+                                                            readPercentage >= 50 ? 'text-amber-600' :
+                                                                'text-rose-600'
                                                             }`}>
                                                             {notice.readCount}/{notice.totalRecipients}
                                                         </span>
@@ -229,8 +229,8 @@ export default function FacultyNoticesPage() {
                                                         <Progress
                                                             value={readPercentage}
                                                             className={`h-2 ${readPercentage >= 80 ? '[&>div]:bg-emerald-500' :
-                                                                    readPercentage >= 50 ? '[&>div]:bg-amber-500' :
-                                                                        '[&>div]:bg-rose-500'
+                                                                readPercentage >= 50 ? '[&>div]:bg-amber-500' :
+                                                                    '[&>div]:bg-rose-500'
                                                                 }`}
                                                         />
                                                         <p className="text-[10px] text-muted-foreground mt-1">

@@ -35,12 +35,7 @@ import {
     Clock,
     Activity,
     Medal,
-    Shield,
-    Heart,
     Sparkles,
-    Crown,
-    Flame,
-    Zap,
 } from "lucide-react";
 import {
     Select,
@@ -436,8 +431,8 @@ export default function FacultyStudentsPage() {
                                                 <div
                                                     key={badge.id}
                                                     className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedBadge === badge.id
-                                                            ? 'border-purple-500 bg-purple-50'
-                                                            : 'border-slate-200 hover:border-slate-300'
+                                                        ? 'border-purple-500 bg-purple-50'
+                                                        : 'border-slate-200 hover:border-slate-300'
                                                         }`}
                                                     onClick={() => setSelectedBadge(badge.id)}
                                                 >

@@ -3,12 +3,12 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, FileText, Video, Search, Filter, Star, FileSpreadsheet, Image as ImageIcon, BookOpen, Play, Eye } from "lucide-react";
+import { Download, FileText, Search, Filter, Star, FileSpreadsheet, Image as ImageIcon, Play, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 
 // Content type configuration for color-coded icons
-const contentTypeConfig: Record<string, { icon: any; bgColor: string; iconColor: string; label: string }> = {
+const contentTypeConfig: Record<string, { icon: React.ElementType; bgColor: string; iconColor: string; label: string }> = {
     "PDF": { icon: FileText, bgColor: "bg-red-50 dark:bg-red-900/20", iconColor: "text-red-500", label: "Notes" },
     "Video": { icon: Play, bgColor: "bg-blue-50 dark:bg-blue-900/20", iconColor: "text-blue-500", label: "Video" },
     "Worksheet": { icon: FileSpreadsheet, bgColor: "bg-emerald-50 dark:bg-emerald-900/20", iconColor: "text-emerald-500", label: "Worksheet" },
@@ -111,8 +111,8 @@ export default function StudentResourcesPage() {
                                         <Button
                                             size="sm"
                                             className={`h-8 sm:h-9 text-xs sm:text-sm gap-1.5 ${item.type === "Video"
-                                                    ? "bg-blue-600 hover:bg-blue-700"
-                                                    : "bg-slate-900 hover:bg-slate-800"
+                                                ? "bg-blue-600 hover:bg-blue-700"
+                                                : "bg-slate-900 hover:bg-slate-800"
                                                 }`}
                                         >
                                             {item.type === "Video" ? (

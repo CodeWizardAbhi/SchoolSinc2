@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, ChevronDown, BookOpen, Clock, Zap, ArrowRight } from "lucide-react";
+import { AlertCircle, ChevronDown, BookOpen, Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
@@ -93,8 +93,8 @@ export default function StudentExams() {
                                         <Link href="/student/resources">
                                             <Button
                                                 className={`h-10 text-xs sm:text-sm gap-2 ${exam.daysLeft <= 3
-                                                        ? "bg-red-600 hover:bg-red-700"
-                                                        : "bg-blue-600 hover:bg-blue-700"
+                                                    ? "bg-red-600 hover:bg-red-700"
+                                                    : "bg-blue-600 hover:bg-blue-700"
                                                     }`}
                                             >
                                                 <BookOpen className="h-4 w-4" />

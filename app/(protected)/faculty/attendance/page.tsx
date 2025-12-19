@@ -9,7 +9,7 @@ import { SpeedGridAttendance } from "@/components/faculty/speed-grid-attendance"
 import { MatrixAttendance } from "@/components/faculty/matrix-attendance";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Users,
     UserCheck,

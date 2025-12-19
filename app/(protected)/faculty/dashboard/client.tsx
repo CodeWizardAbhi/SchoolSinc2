@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+// Switch removed - not used
 import {
     BookOpen,
     Calendar,
@@ -107,7 +107,7 @@ export default function FacultyDashboardClient({ userName }: FacultyDashboardCli
     // Fix 1: Live Class State
     const [isClassActive, setIsClassActive] = useState(false);
     const [classTimer, setClassTimer] = useState(0); // in seconds
-    const [activeClass, setActiveClass] = useState(todaySchedule.find(s => s.status === 'ongoing'));
+    const [activeClass] = useState(todaySchedule.find(s => s.status === 'ongoing'));
 
     // Fix 3: Approvals state
     const [approvals, setApprovals] = useState(pendingApprovals);

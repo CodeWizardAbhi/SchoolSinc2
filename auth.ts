@@ -24,21 +24,55 @@ export const { auth, signIn, signOut, handlers } = NextAuth({
 
                 if (parsedCredentials.success) {
                     const { email, password, role } = parsedCredentials.data;
-                    const user = await prisma.user.findUnique({ where: { email } });
+                    console.log("Login attempt:", { email, role, passwordProvided: !!password });
 
-                    if (!user) return null;
+                    // Helper function to find user with retry logic
+                    const findUserWithRetry = async (retries = 1) => {
+                        try {
+                            return await prisma.user.findUnique({ where: { email } });
+                        } catch (error) {
+                            if (retries > 0) {
+                                console.log("Database query failed, retrying...");
+                                // Wait a short time before retrying to allow connection to establish
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                return findUserWithRetry(retries - 1);
+                            }
+                            throw error;
+                        }
+                    };
 
-                    // Enforce Role Check if role is provided
-                    if (role && user.role !== role) {
-                        console.log(`Role mismatch: User role ${user.role} does not match required role ${role}`);
+                    try {
+                        const user = await findUserWithRetry();
+                        console.log("User found:", user ? { id: user.id, email: user.email, role: user.role } : "No user found");
+
+                        if (!user) {
+                            console.log("Returning null: User not found");
+                            return null;
+                        }
+
+                        // Enforce Role Check if role is provided
+                        if (role && user.role !== role) {
+                            console.log(`Role mismatch: User role ${user.role} does not match required role ${role}`);
+                            return null;
+                        }
+
+                        // Simple password match for now
+                        if (password === user.password) {
+                            console.log("Password match success");
+                            return user;
+                        } else {
+                            console.log("Password mismatch");
+                            console.log("Expected:", user.password);
+                            console.log("Received:", password);
+                            return null;
+                        }
+                    } catch (error) {
+                        console.error("Authorization error:", error);
                         return null;
                     }
-
-                    // Simple password match for now
-                    if (password === user.password) return user;
                 }
 
-                console.log("Invalid credentials");
+                console.log("Invalid credentials schema parse failed");
                 return null;
             },
         }),

@@ -1,11 +1,8 @@
 
 import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { z } from "zod";
-import { prisma } from "@/lib/prisma"; // We need to ensure lib/prisma exists or create it
-// Note: We'll fix the db import in auth.ts if needed, but for config we often keep it light.
-// Actually, for v5 edge compatibility, we usually separate the config that relies on DB adapters vs pure config.
-// But we are not using an intricate adapter yet, just credentials.
+// Note: Credentials provider and Prisma are defined in auth.ts only.
+// auth.config.ts runs in Edge runtime where Prisma is not compatible.
+// Keep this file light with only configuration that works in Edge runtime.
 
 export const authConfig = {
     pages: {
